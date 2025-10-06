@@ -1,0 +1,28 @@
+# Environment variables
+.env
+backend/.env
+
+# Database files
+*.db
+chatbot.db
+
+# Node modules and build files
+node_modules/
+build/
+dist/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# IDE files
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
