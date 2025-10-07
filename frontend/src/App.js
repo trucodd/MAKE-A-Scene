@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import CharacterManager from './components/CharacterManager';
 import ChatArea from './components/ChatArea';
-import AudioMixer from './components/AudioMixer';
+import AudioTimeline from './components/AudioTimeline';
 import './App.css';
 
 const API_BASE = 'http://localhost:8000';
@@ -66,7 +66,7 @@ function App() {
             className={activeTab === 'mixer' ? 'active' : ''}
             onClick={() => setActiveTab('mixer')}
           >
-            🎛️ Audio Mixer
+            🎬 Timeline Editor
           </button>
         </nav>
       </header>
@@ -87,10 +87,9 @@ function App() {
           />
         )}
         {activeTab === 'mixer' && (
-          <AudioMixer 
+          <AudioTimeline 
             tracks={mixerTracks}
             onTracksChange={setMixerTracks}
-            onClose={() => {}} // No close button needed on dedicated page
           />
         )}
       </main>

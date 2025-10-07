@@ -361,7 +361,21 @@ function AudioTimeline({ tracks, onTracksChange }) {
           </div>
 
           <div className="track-lane bg-track-lane">
-            <div className="track-label">Background</div>
+            <div className="track-label">
+              Background
+              <button
+                className="permanent-add-btn"
+                onClick={() => {
+                  setInsertPosition(0);
+                  setInsertGapSize(totalDuration);
+                  setInsertTrackType('background');
+                  setShowSoundPicker(true);
+                }}
+                title="Add background sound"
+              >
+                +
+              </button>
+            </div>
             <div className="track-content" style={{ height: TRACK_HEIGHT }}>
               {tracks.filter(t => t.type === 'background').map(clip => (
                 <AudioClip
@@ -531,7 +545,7 @@ function AudioClip({ clip, pixelsPerSecond, trackHeight, isSelected, onSelect, o
   
   // Show only the visible (non-trimmed) portion
   const clipWidth = isTrimmableClip ? (outPoint - inPoint) * pixelsPerSecond : clip.duration * pixelsPerSecond;
-  const clipLeft = clip.startTime * pixelsPerSecond;
+  const clipLeft = (clip.startTime || 0) * pixelsPerSecond;
 
   const generateWaveform = useCallback(() => {
     const bars = Math.floor(clipWidth / 3);
@@ -636,8 +650,9 @@ function AudioClip({ clip, pixelsPerSecond, trackHeight, isSelected, onSelect, o
 
   const handleMouseDown = useCallback((e) => {
     e.stopPropagation();
+    e.preventDefault();
     setIsDragging(true);
-    setDragStart({ x: e.clientX, startTime: clip.startTime });
+    setDragStart({ x: e.clientX, startTime: clip.startTime || 0 });
   }, [clip.startTime]);
 
   useEffect(() => {

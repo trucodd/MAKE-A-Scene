@@ -146,11 +146,11 @@ function ChatArea({ characters, mixerTracks, onTracksChange }) {
                           };
                           onTracksChange(prev => [...prev, newTrack]);
                         });
-                        alert('Audio added to mixer! Go to Audio Mixer tab to edit.');
+                        alert('Audio added to timeline! Go to Timeline Editor tab to edit.');
                       }}
-                      title="Add to Audio Mixer"
+                      title="Add to Timeline Editor"
                     >
-                      ➕ Mixer
+                      ➕ Timeline
                     </button>
                   )}
                 </div>

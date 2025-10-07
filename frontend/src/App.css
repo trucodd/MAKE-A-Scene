@@ -1486,7 +1486,29 @@
   font-weight: bold;
   display: flex;
   align-items: center;
+  justify-content: space-between;
   border-right: 1px solid #555;
+}
+
+.permanent-add-btn {
+  background: rgba(0, 255, 136, 0.8);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.permanent-add-btn:hover {
+  background: rgba(0, 255, 136, 1);
+  transform: scale(1.1);
 }
 
 .main-track-lane .track-label {
@@ -1512,6 +1534,7 @@
   cursor: move;
   user-select: none;
   overflow: hidden;
+  z-index: 10;
 }
 
 .audio-clip.tts-clip {
