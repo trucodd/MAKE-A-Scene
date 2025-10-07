@@ -3,6 +3,7 @@ import axios from 'axios'
 import CharacterManager from './components/CharacterManager'
 import ChatArea from './components/ChatArea'
 import AudioTimeline from './components/AudioTimeline'
+import LandingPage from './components/LandingPage'
 import './App.css'
 
 const API_BASE = 'http://localhost:8000';
@@ -12,6 +13,7 @@ function App() {
   const [voices, setVoices] = useState([]);
   const [activeTab, setActiveTab] = useState('chat');
   const [mixerTracks, setMixerTracks] = useState([]);
+  const [showLanding, setShowLanding] = useState(true);
 
   useEffect(() => {
     fetchCharacters();
@@ -45,44 +47,60 @@ function App() {
     }
   };
 
+  if (showLanding) {
+    return <LandingPage onEnterApp={() => setShowLanding(false)} />;
+  }
+
   return (
     <div className="max-w-7xl mx-auto p-6 min-h-screen bg-black/30 backdrop-blur-sm">
-      <header className="bg-gradient-to-br from-dark-purple via-blue-900 to-dark-blue border border-deep-purple/30 rounded-2xl p-8 mb-8 shadow-2xl shadow-deep-purple/20">
-        <h1 className="text-4xl font-bold text-center mb-6 bg-gradient-to-r from-neon-green via-deep-purple to-neon-green bg-clip-text text-transparent tracking-tight">
-          MAKE-A-Scene Chatbot
-        </h1>
-        <nav className="flex gap-4 justify-center">
+      <header className="bg-gradient-to-br from-dark-purple via-blue-900 to-dark-blue border border-deep-purple/30 rounded-xl p-4 mb-4 shadow-lg shadow-deep-purple/10">
+        <div className="flex justify-between items-center">
           <button 
-            className={`px-7 py-3.5 rounded-xl font-semibold text-base transition-all duration-300 backdrop-blur-sm ${
-              activeTab === 'chat' 
-                ? 'bg-gradient-to-r from-deep-purple to-neon-green text-black font-bold shadow-lg shadow-neon-green/40' 
-                : 'bg-gradient-to-br from-dark-purple/80 to-dark-blue/80 text-white border-2 border-deep-purple/30 hover:bg-gradient-to-br hover:from-deep-purple/30 hover:to-neon-green/30 hover:border-neon-green/50 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-deep-purple/30'
-            }`}
-            onClick={() => setActiveTab('chat')}
+            onClick={() => setShowLanding(true)}
+            className="flex items-center space-x-1 text-white/70 hover:text-white transition-colors text-sm"
           >
-            Chat
+            <span>←</span>
+            <span>Home</span>
           </button>
-          <button 
-            className={`px-7 py-3.5 rounded-xl font-semibold text-base transition-all duration-300 backdrop-blur-sm ${
-              activeTab === 'characters' 
-                ? 'bg-gradient-to-r from-deep-purple to-neon-green text-black font-bold shadow-lg shadow-neon-green/40' 
-                : 'bg-gradient-to-br from-dark-purple/80 to-dark-blue/80 text-white border-2 border-deep-purple/30 hover:bg-gradient-to-br hover:from-deep-purple/30 hover:to-neon-green/30 hover:border-neon-green/50 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-deep-purple/30'
-            }`}
-            onClick={() => setActiveTab('characters')}
-          >
-            Characters
-          </button>
-          <button 
-            className={`px-7 py-3.5 rounded-xl font-semibold text-base transition-all duration-300 backdrop-blur-sm ${
-              activeTab === 'mixer' 
-                ? 'bg-gradient-to-r from-deep-purple to-neon-green text-black font-bold shadow-lg shadow-neon-green/40' 
-                : 'bg-gradient-to-br from-dark-purple/80 to-dark-blue/80 text-white border-2 border-deep-purple/30 hover:bg-gradient-to-br hover:from-deep-purple/30 hover:to-neon-green/30 hover:border-neon-green/50 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-deep-purple/30'
-            }`}
-            onClick={() => setActiveTab('mixer')}
-          >
-            🎬 Timeline Editor
-          </button>
-        </nav>
+          <div className="flex items-center space-x-2">
+            <div className="w-6 h-6 bg-gradient-to-r from-purple-500 to-green-400 rounded flex items-center justify-center">
+              <span className="text-black font-bold text-xs">🎭</span>
+            </div>
+            <span className="text-white font-bold text-lg">MAKE-A-Scene</span>
+          </div>
+          <nav className="flex gap-2">
+            <button 
+              className={`px-4 py-2 rounded-lg font-medium text-sm transition-all duration-300 ${
+                activeTab === 'chat' 
+                  ? 'bg-gradient-to-r from-deep-purple to-neon-green text-black font-bold' 
+                  : 'text-white/80 hover:text-white hover:bg-white/10'
+              }`}
+              onClick={() => setActiveTab('chat')}
+            >
+              Chat
+            </button>
+            <button 
+              className={`px-4 py-2 rounded-lg font-medium text-sm transition-all duration-300 ${
+                activeTab === 'characters' 
+                  ? 'bg-gradient-to-r from-deep-purple to-neon-green text-black font-bold' 
+                  : 'text-white/80 hover:text-white hover:bg-white/10'
+              }`}
+              onClick={() => setActiveTab('characters')}
+            >
+              Characters
+            </button>
+            <button 
+              className={`px-4 py-2 rounded-lg font-medium text-sm transition-all duration-300 ${
+                activeTab === 'mixer' 
+                  ? 'bg-gradient-to-r from-deep-purple to-neon-green text-black font-bold' 
+                  : 'text-white/80 hover:text-white hover:bg-white/10'
+              }`}
+              onClick={() => setActiveTab('mixer')}
+            >
+              🎬 Timeline
+            </button>
+          </nav>
+        </div>
       </header>
       
       <main>

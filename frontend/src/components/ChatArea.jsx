@@ -103,25 +103,25 @@ function ChatArea({ characters, mixerTracks, onTracksChange }) {
   };
 
   return (
-    <div className="flex flex-col h-[75vh] gap-6">
-      <div className="flex-1 overflow-y-auto border border-deep-purple/30 rounded-2xl p-6 bg-gradient-to-br from-dark-purple/60 to-dark-blue/60 backdrop-blur-sm shadow-inner shadow-black/30 scrollbar-thin scrollbar-thumb-gradient-to-r scrollbar-thumb-from-deep-purple scrollbar-thumb-to-neon-green scrollbar-track-black/20">
+    <div className="flex flex-col h-[85vh] gap-4">
+      <div className="flex-1 overflow-y-auto border border-purple-500/30 rounded-2xl p-8 bg-gradient-to-br from-black/60 via-purple-900/20 to-green-900/20 backdrop-blur-sm shadow-inner shadow-black/30 min-h-[500px]">
         {messages.map((message, index) => (
           <div 
             key={index} 
-            className={`mb-5 p-5 rounded-2xl bg-gradient-to-br from-black/40 to-dark-purple/40 backdrop-blur-xs transition-all duration-300 hover:translate-x-1 hover:shadow-lg ${
+            className={`mb-6 p-6 rounded-2xl bg-gradient-to-br from-black/60 to-purple-900/30 backdrop-blur-xs transition-all duration-300 hover:translate-x-1 hover:shadow-lg border ${
               message.sender === 'bot' 
-                ? 'border-l-4 border-deep-purple hover:shadow-deep-purple/30' 
-                : 'border-l-4 border-neon-green hover:shadow-neon-green/30'
+                ? 'border-purple-500/30 hover:shadow-purple-500/30 hover:border-purple-400/50' 
+                : 'border-green-500/30 hover:shadow-green-500/30 hover:border-green-400/50'
             }`}
           >
             <div className="flex items-center gap-3 mb-3">
-              <span className="font-bold text-base bg-gradient-to-r from-neon-green to-deep-purple bg-clip-text text-transparent">
-                {message.sender === 'bot' ? 'Bot' : message.character_name}
+              <span className="font-bold text-base bg-gradient-to-r from-green-400 to-purple-500 bg-clip-text text-transparent">
+                {message.sender === 'bot' ? 'AI Assistant' : message.character_name}
               </span>
               {message.audio_data && (
                 <div className="flex items-center gap-3">
                   <button 
-                    className="bg-gradient-to-br from-neon-green/20 to-deep-purple/20 border border-neon-green/30 rounded-lg px-2 py-2 text-neon-green transition-all duration-300 hover:bg-gradient-to-br hover:from-neon-green/30 hover:to-deep-purple/30 hover:scale-110 hover:shadow-md hover:shadow-neon-green/30"
+                    className="bg-gradient-to-br from-green-500/20 to-purple-500/20 border border-green-500/30 rounded-lg px-2 py-2 text-green-400 transition-all duration-300 hover:bg-gradient-to-br hover:from-green-500/30 hover:to-purple-500/30 hover:scale-110 hover:shadow-md hover:shadow-green-500/30"
                     onClick={() => {
                       document.querySelectorAll('audio').forEach(a => {
                         a.pause();
@@ -166,23 +166,23 @@ function ChatArea({ characters, mixerTracks, onTracksChange }) {
                 </div>
               )}
             </div>
-            <div className="text-white/90 leading-relaxed text-base">
+            <div className="text-white/90 leading-relaxed text-lg">
               {message.text}
             </div>
           </div>
         ))}
       </div>
 
-      <div className="border border-deep-purple/30 rounded-2xl p-6 bg-gradient-to-br from-dark-purple/80 to-dark-blue/80 backdrop-blur-sm shadow-2xl shadow-deep-purple/20">
+      <div className="border border-purple-500/30 rounded-2xl p-6 bg-gradient-to-br from-black/80 via-purple-900/40 to-green-900/20 backdrop-blur-sm shadow-2xl shadow-purple-500/20">
         <div className="flex items-center gap-6 mb-5 flex-wrap">
           <div className="flex items-center gap-3">
-            <label className="font-semibold text-neon-green text-base">
+            <label className="font-semibold text-green-400 text-base">
               Character:
             </label>
             <select
               value={selectedCharacter}
               onChange={(e) => setSelectedCharacter(e.target.value)}
-              className="px-4 py-3 border-2 border-deep-purple/30 rounded-lg bg-black/50 text-white text-base font-medium transition-all duration-300 focus:outline-none focus:border-neon-green focus:shadow-md focus:shadow-neon-green/30"
+              className="px-4 py-3 border-2 border-purple-500/30 rounded-lg bg-black/50 text-white text-base font-medium transition-all duration-300 focus:outline-none focus:border-green-400 focus:shadow-md focus:shadow-green-400/30"
             >
               {characters.map((character, index) => (
                 <option key={index} value={character.name}>
@@ -199,13 +199,13 @@ function ChatArea({ characters, mixerTracks, onTracksChange }) {
             value={rephraseTags}
             onChange={(e) => setRephraseTags(e.target.value)}
             placeholder="Rephrase tags (optional): dramatic, intense, funny, etc."
-            className="w-full p-4 border-2 border-deep-purple/30 rounded-xl text-base bg-black/50 text-white transition-all duration-300 focus:outline-none focus:border-neon-green focus:shadow-lg focus:shadow-neon-green/30 placeholder-white/50"
+            className="w-full p-4 border-2 border-purple-500/30 rounded-xl text-base bg-black/50 text-white transition-all duration-300 focus:outline-none focus:border-green-400 focus:shadow-lg focus:shadow-green-400/30 placeholder-white/50"
           />
         </div>
 
         {availableStyles.length > 0 && (
           <div className="mb-4">
-            <label className="block text-neon-green font-semibold mb-3">
+            <label className="block text-green-400 font-semibold mb-3">
               Voice Style for {selectedCharacter} (optional):
             </label>
             <div className="flex gap-3 flex-wrap">
@@ -214,8 +214,8 @@ function ChatArea({ characters, mixerTracks, onTracksChange }) {
                   key={style}
                   className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 backdrop-blur-xs ${
                     selectedVoiceStyle === style
-                      ? 'bg-gradient-to-r from-deep-purple to-neon-green text-black font-bold shadow-md shadow-neon-green/40'
-                      : 'bg-gradient-to-br from-deep-purple/20 to-black/40 text-white/80 border border-deep-purple/30 hover:bg-gradient-to-br hover:from-deep-purple/30 hover:to-neon-green/20 hover:border-neon-green/50 hover:-translate-y-0.5'
+                      ? 'bg-gradient-to-r from-purple-600 to-green-500 text-white font-bold shadow-md shadow-green-400/40'
+                      : 'bg-gradient-to-br from-purple-900/20 to-black/40 text-white/80 border border-purple-500/30 hover:bg-gradient-to-br hover:from-purple-600/30 hover:to-green-500/20 hover:border-green-400/50 hover:-translate-y-0.5'
                   }`}
                   onClick={() => setSelectedVoiceStyle(selectedVoiceStyle === style ? '' : style)}
                 >
@@ -232,20 +232,20 @@ function ChatArea({ characters, mixerTracks, onTracksChange }) {
             onChange={(e) => setInputText(e.target.value)}
             placeholder={`Enter text as ${selectedCharacter}...`}
             rows="3"
-            className="flex-1 p-4 border-2 border-deep-purple/30 rounded-xl resize-vertical text-base bg-black/50 text-white transition-all duration-300 focus:outline-none focus:border-neon-green focus:shadow-lg focus:shadow-neon-green/30 placeholder-white/50 min-h-[120px]"
+            className="flex-1 p-4 border-2 border-purple-500/30 rounded-xl resize-vertical text-base bg-black/50 text-white transition-all duration-300 focus:outline-none focus:border-green-400 focus:shadow-lg focus:shadow-green-400/30 placeholder-white/50 min-h-[120px]"
           />
           <div className="flex flex-col gap-3">
             <button 
               onClick={handleRephrase} 
               disabled={!inputText.trim()}
-              className="bg-gradient-to-r from-neon-green to-green-400 text-black px-6 py-4 rounded-xl font-semibold text-base min-w-[120px] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-neon-green/40 disabled:bg-gradient-to-br disabled:from-gray-600/50 disabled:to-gray-700/50 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none"
+              className="bg-gradient-to-r from-green-500 to-green-400 text-white px-6 py-4 rounded-xl font-semibold text-base min-w-[120px] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-green-400/40 disabled:bg-gradient-to-br disabled:from-gray-600/50 disabled:to-gray-700/50 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none"
             >
               Rephrase
             </button>
             <button 
               onClick={sendMessage} 
               disabled={!inputText.trim()}
-              className="bg-gradient-to-r from-deep-purple to-purple-600 text-white px-6 py-4 rounded-xl font-semibold text-base min-w-[120px] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-deep-purple/40 disabled:bg-gradient-to-br disabled:from-gray-600/50 disabled:to-gray-700/50 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none"
+              className="bg-gradient-to-r from-purple-600 to-purple-500 text-white px-6 py-4 rounded-xl font-semibold text-base min-w-[120px] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-purple-500/40 disabled:bg-gradient-to-br disabled:from-gray-600/50 disabled:to-gray-700/50 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none"
             >
               Send
             </button>

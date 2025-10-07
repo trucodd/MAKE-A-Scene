@@ -316,29 +316,29 @@ function AudioTimeline({ tracks, onTracksChange }) {
   }, []);
 
   return (
-    <div className="bg-gradient-to-br from-black via-dark-purple/50 to-black text-white border border-deep-purple/30 rounded-2xl overflow-hidden my-6 shadow-2xl shadow-deep-purple/20">
-      <div className="bg-gradient-to-br from-dark-purple/90 to-dark-blue/90 px-5 py-4 border-b border-deep-purple/30">
+    <div className="bg-gradient-to-br from-black via-purple-900/50 to-green-900/20 text-white border border-purple-500/30 rounded-2xl overflow-hidden my-6 shadow-2xl shadow-purple-500/20">
+      <div className="bg-gradient-to-br from-black/80 via-purple-900/40 to-green-900/20 px-5 py-4 border-b border-purple-500/30">
         <div className="flex items-center gap-5">
           <button 
             onClick={playFromPlayhead}
-            className="bg-gradient-to-br from-deep-purple/30 to-neon-green/30 text-white border border-deep-purple/30 rounded-lg px-4 py-2.5 font-semibold text-sm transition-all duration-300 hover:bg-gradient-to-br hover:from-deep-purple/50 hover:to-neon-green/50 hover:-translate-y-0.5 hover:shadow-md hover:shadow-deep-purple/30"
+            className="bg-gradient-to-br from-purple-600/30 to-green-500/30 text-white border border-purple-500/30 rounded-lg px-4 py-2.5 font-semibold text-sm transition-all duration-300 hover:bg-gradient-to-br hover:from-purple-600/50 hover:to-green-500/50 hover:-translate-y-0.5 hover:shadow-md hover:shadow-purple-500/30"
           >
             {isPlaying ? '⏸️' : '▶️'}
           </button>
-          <span className="font-mono text-lg font-bold bg-gradient-to-r from-neon-green to-deep-purple bg-clip-text text-transparent">
+          <span className="font-mono text-lg font-bold bg-gradient-to-r from-green-400 to-purple-500 bg-clip-text text-transparent">
             {formatTime(playhead)}
           </span>
           <div className="flex items-center gap-2">
             <button 
               onClick={() => setZoom(Math.max(0.25, zoom - 0.25))}
-              className="bg-gradient-to-br from-deep-purple/30 to-neon-green/30 text-white border border-deep-purple/30 rounded-lg px-3 py-2 text-sm transition-all duration-300 hover:bg-gradient-to-br hover:from-deep-purple/50 hover:to-neon-green/50 hover:-translate-y-0.5"
+              className="bg-gradient-to-br from-purple-600/30 to-green-500/30 text-white border border-purple-500/30 rounded-lg px-3 py-2 text-sm transition-all duration-300 hover:bg-gradient-to-br hover:from-purple-600/50 hover:to-green-500/50 hover:-translate-y-0.5"
             >
               🔍-
             </button>
             <span className="text-sm font-medium">{Math.round(zoom * 100)}%</span>
             <button 
               onClick={() => setZoom(Math.min(4, zoom + 0.25))}
-              className="bg-gradient-to-br from-deep-purple/30 to-neon-green/30 text-white border border-deep-purple/30 rounded-lg px-3 py-2 text-sm transition-all duration-300 hover:bg-gradient-to-br hover:from-deep-purple/50 hover:to-neon-green/50 hover:-translate-y-0.5"
+              className="bg-gradient-to-br from-purple-600/30 to-green-500/30 text-white border border-purple-500/30 rounded-lg px-3 py-2 text-sm transition-all duration-300 hover:bg-gradient-to-br hover:from-purple-600/50 hover:to-green-500/50 hover:-translate-y-0.5"
             >
               🔍+
             </button>
@@ -404,7 +404,7 @@ function AudioTimeline({ tracks, onTracksChange }) {
                   }}
                 >
                   <button
-                    className="bg-gradient-to-br from-neon-green/80 to-deep-purple/80 text-white border border-neon-green/50 rounded-full w-9 h-9 font-bold text-lg flex items-center justify-center transition-all duration-300 hover:bg-gradient-to-br hover:from-neon-green hover:to-deep-purple hover:scale-115 hover:shadow-lg hover:shadow-neon-green/50"
+                    className="bg-gradient-to-br from-green-500/80 to-purple-600/80 text-white border border-green-500/50 rounded-full w-9 h-9 font-bold text-lg flex items-center justify-center transition-all duration-300 hover:bg-gradient-to-br hover:from-green-500 hover:to-purple-600 hover:scale-115 hover:shadow-lg hover:shadow-green-500/50"
                     onClick={() => {
                       setInsertPosition(space.start);
                       setInsertGapSize(space.end - space.start);
@@ -424,7 +424,7 @@ function AudioTimeline({ tracks, onTracksChange }) {
             <div className="w-30 px-2.5 bg-blue-800 text-gray-300 text-xs font-bold flex items-center justify-between border-r border-gray-600">
               Background
               <button
-                className="bg-gradient-to-br from-neon-green/80 to-deep-purple/80 text-white border border-neon-green/50 rounded-full w-6 h-6 font-bold text-base flex items-center justify-center transition-all duration-300 hover:bg-gradient-to-br hover:from-neon-green hover:to-deep-purple hover:scale-120 hover:shadow-md hover:shadow-neon-green/50"
+                className="bg-gradient-to-br from-green-500/80 to-purple-600/80 text-white border border-green-500/50 rounded-full w-6 h-6 font-bold text-base flex items-center justify-center transition-all duration-300 hover:bg-gradient-to-br hover:from-green-500 hover:to-purple-600 hover:scale-120 hover:shadow-md hover:shadow-green-500/50"
                 onClick={() => {
                   setInsertPosition(0);
                   setInsertGapSize(totalDuration);
@@ -471,7 +471,7 @@ function AudioTimeline({ tracks, onTracksChange }) {
                   }}
                 >
                   <button
-                    className="bg-gradient-to-br from-neon-green/80 to-deep-purple/80 text-white border border-neon-green/50 rounded-full w-9 h-9 font-bold text-lg flex items-center justify-center transition-all duration-300 hover:bg-gradient-to-br hover:from-neon-green hover:to-deep-purple hover:scale-115 hover:shadow-lg hover:shadow-neon-green/50"
+                    className="bg-gradient-to-br from-green-500/80 to-purple-600/80 text-white border border-green-500/50 rounded-full w-9 h-9 font-bold text-lg flex items-center justify-center transition-all duration-300 hover:bg-gradient-to-br hover:from-green-500 hover:to-purple-600 hover:scale-115 hover:shadow-lg hover:shadow-green-500/50"
                     onClick={() => {
                       setInsertPosition(space.start);
                       setInsertGapSize(space.end - space.start);
@@ -752,12 +752,12 @@ function AudioClip({ clip, pixelsPerSecond, trackHeight, isSelected, onSelect, o
       <div
         className={`absolute rounded-lg cursor-move select-none overflow-hidden z-10 backdrop-blur-xs transition-all duration-300 hover:brightness-120 hover:-translate-y-0.5 ${
           clip.type === 'tts' 
-            ? 'bg-gradient-to-br from-neon-green/80 to-green-600/80 border-2 border-neon-green/60' 
+            ? 'bg-gradient-to-br from-green-500/80 to-green-600/80 border-2 border-green-500/60' 
             : 'bg-gradient-to-br from-orange-500/80 to-orange-600/80 border-2 border-orange-500/60'
         } ${
           isSelected 
-            ? 'border-neon-green shadow-lg shadow-neon-green/60 scale-102' 
-            : 'hover:shadow-md hover:shadow-deep-purple/40'
+            ? 'border-green-400 shadow-lg shadow-green-400/60 scale-102' 
+            : 'hover:shadow-md hover:shadow-purple-500/40'
         }`}
         style={{
           left: clipLeft,
@@ -809,7 +809,7 @@ function AudioClip({ clip, pixelsPerSecond, trackHeight, isSelected, onSelect, o
         <div className="p-1 h-full flex flex-col justify-between">
           <div className="flex justify-between items-center mb-0.5">
             <button 
-              className="bg-gradient-to-br from-deep-purple/80 to-neon-green/80 border-none rounded text-white cursor-pointer text-xs font-semibold px-2 py-0.5 mr-2 transition-all duration-300 hover:bg-gradient-to-br hover:from-deep-purple hover:to-neon-green hover:scale-105"
+              className="bg-gradient-to-br from-purple-600/80 to-green-500/80 border-none rounded text-white cursor-pointer text-xs font-semibold px-2 py-0.5 mr-2 transition-all duration-300 hover:bg-gradient-to-br hover:from-purple-600 hover:to-green-500 hover:scale-105"
               onClick={(e) => {
                 e.stopPropagation();
                 if (isClipPlaying) {
@@ -918,7 +918,7 @@ function ClipPropertiesPanel({ clip, onUpdate, onDelete }) {
 
   return (
     <div className="fixed right-5 top-1/2 transform -translate-y-1/2 bg-gray-800 text-white p-4 rounded-lg border border-gray-600 min-w-[200px] z-50">
-      <h4 className="m-0 mb-4 text-neon-green">{clip.name}</h4>
+      <h4 className="m-0 mb-4 text-green-400">{clip.name}</h4>
       
       {(clip.type === 'background' || clip.type === 'sound') && (
         <>
