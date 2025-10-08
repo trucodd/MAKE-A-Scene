@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -9,14 +11,84 @@
   
   body {
     margin: 0;
-    background: linear-gradient(135deg, #000000 0%, #1a0a2e 25%, #0f3460 50%, #0a1a0a 75%, #000000 100%);
+    background: #F9FAFC;
     min-height: 100vh;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-weight: 400;
+    letter-spacing: -0.01em;
+    color: #333333;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Inter', sans-serif;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: #333333;
   }
 }
 
 @layer utilities {
-  .text-shadow-sm {
-    text-shadow: 1px 1px 1px rgba(0,0,0,0.5);
+  /* Ethereal Gradient */
+  .ethereal-gradient {
+    background: linear-gradient(135deg, 
+      rgba(221, 214, 254, 0.8) 0%,
+      rgba(196, 181, 253, 0.6) 25%,
+      rgba(252, 231, 243, 0.7) 50%,
+      rgba(254, 215, 170, 0.5) 75%,
+      rgba(221, 214, 254, 0.8) 100%);
+    filter: blur(1px);
+  }
+  
+  /* Custom Scrollbar */
+  .scrollbar-thin {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar {
+    display: none;
+  }
+  
+  /* Card Shadows */
+  .card-shadow {
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+  }
+  
+  .card-shadow-hover {
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  }
+  
+  /* Button Styles */
+  .btn-primary {
+    background: #6B4BF8;
+    color: white;
+    border-radius: 12px;
+    padding: 12px 24px;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    border: none;
+    cursor: pointer;
+  }
+  
+  .btn-primary:hover {
+    background: #5a3de8;
+    transform: translateY(-1px);
+  }
+  
+  .btn-secondary {
+    background: white;
+    color: #6B4BF8;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 12px 24px;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    cursor: pointer;
+  }
+  
+  .btn-secondary:hover {
+    background: #f8fafc;
+    border-color: #6B4BF8;
+    transform: translateY(-1px);
   }
 }

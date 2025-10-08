@@ -65,8 +65,6 @@ function ChatArea({ characters, mixerTracks, onTracksChange }) {
     }
   };
 
-
-
   const sendMessage = async () => {
     if (!inputText.trim()) return;
 
@@ -78,10 +76,14 @@ function ChatArea({ characters, mixerTracks, onTracksChange }) {
       });
       
       const { user_message, bot_response } = response.data;
-      setMessages(prev => [...prev, user_message, bot_response]);
+      const newMessages = [user_message];
+      if (bot_response) {
+        newMessages.push(bot_response);
+      }
+      setMessages(prev => [...prev, ...newMessages]);
       
       // Auto-play TTS if available
-      if (bot_response && bot_response.audio_data) {
+      if (user_message && user_message.audio_data) {
         try {
           // Stop any currently playing audio
           document.querySelectorAll('audio').forEach(a => {
@@ -89,7 +91,7 @@ function ChatArea({ characters, mixerTracks, onTracksChange }) {
             a.currentTime = 0;
           });
           
-          const audio = new Audio(bot_response.audio_data);
+          const audio = new Audio(user_message.audio_data);
           audio.play().catch(e => console.error('Audio play error:', e));
         } catch (e) {
           console.error('Audio creation error:', e);
@@ -103,86 +105,97 @@ function ChatArea({ characters, mixerTracks, onTracksChange }) {
   };
 
   return (
-    <div className="flex flex-col h-[85vh] gap-4">
-      <div className="flex-1 overflow-y-auto border border-purple-500/30 rounded-2xl p-8 bg-gradient-to-br from-black/60 via-purple-900/20 to-green-900/20 backdrop-blur-sm shadow-inner shadow-black/30 min-h-[500px]">
-        {messages.map((message, index) => (
-          <div 
-            key={index} 
-            className={`mb-6 p-6 rounded-2xl bg-gradient-to-br from-black/60 to-purple-900/30 backdrop-blur-xs transition-all duration-300 hover:translate-x-1 hover:shadow-lg border ${
-              message.sender === 'bot' 
-                ? 'border-purple-500/30 hover:shadow-purple-500/30 hover:border-purple-400/50' 
-                : 'border-green-500/30 hover:shadow-green-500/30 hover:border-green-400/50'
-            }`}
-          >
-            <div className="flex items-center gap-3 mb-3">
-              <span className="font-bold text-base bg-gradient-to-r from-green-400 to-purple-500 bg-clip-text text-transparent">
-                {message.sender === 'bot' ? 'AI Assistant' : message.character_name}
-              </span>
-              {message.audio_data && (
-                <div className="flex items-center gap-3">
-                  <button 
-                    className="bg-gradient-to-br from-green-500/20 to-purple-500/20 border border-green-500/30 rounded-lg px-2 py-2 text-green-400 transition-all duration-300 hover:bg-gradient-to-br hover:from-green-500/30 hover:to-purple-500/30 hover:scale-110 hover:shadow-md hover:shadow-green-500/30"
-                    onClick={() => {
-                      document.querySelectorAll('audio').forEach(a => {
-                        a.pause();
-                        a.currentTime = 0;
-                      });
-                      const audio = new Audio(message.audio_data);
-                      audio.play().catch(e => console.error('Audio play error:', e));
-                    }}
-                    title="Play Audio"
-                  >
-                    🔊
-                  </button>
-                  {message.audio_id && (
-                    <button 
-                      className="bg-gradient-to-r from-cyan-600 to-cyan-500 text-white px-3 py-2 rounded-lg text-xs font-semibold transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md hover:shadow-cyan-500/40"
-                      onClick={() => {
-                        const audio = new Audio(message.audio_data);
-                        audio.addEventListener('loadedmetadata', () => {
-                          const ttsClips = mixerTracks.filter(t => t.type === 'tts' || t.type === 'sound');
-                          const lastEndTime = ttsClips.length > 0 
-                            ? Math.max(...ttsClips.map(t => (t.startTime || 0) + (t.duration || 0)))
-                            : 0;
-                          
-                          const newTrack = {
-                            id: Date.now(),
-                            name: `${message.character_name || 'Bot'}: ${message.text.substring(0, 30)}...`,
-                            audioData: message.audio_data,
-                            volume: 1.0,
-                            type: 'tts',
-                            duration: audio.duration || 3.0,
-                            startTime: lastEndTime
-                          };
-                          onTracksChange(prev => [...prev, newTrack]);
-                        });
-                        alert('Audio added to timeline! Go to Timeline Editor tab to edit.');
-                      }}
-                      title="Add to Timeline Editor"
-                    >
-                      ➕ Timeline
-                    </button>
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[85vh]">
+      {/* Messages Area - Takes 2 columns */}
+      <div className="lg:col-span-2 bg-white rounded-3xl p-6 card-shadow hover:card-shadow-hover transition-all duration-200 flex flex-col">
+        <h2 className="text-2xl font-bold text-gray-900 mb-6">Conversation</h2>
+        <div className="flex-1 overflow-y-auto pr-4 -mr-4 scrollbar-thin" style={{maxHeight: 'calc(85vh - 120px)'}}>
+          {messages.map((message, index) => (
+            <div key={index} className="mb-2 group">
+              <div className="bg-gray-50 rounded-xl p-3 hover:bg-gray-100 transition-colors duration-200">
+                <div className="flex items-start justify-between">
+                  <div className="flex items-start gap-3 flex-1">
+                    <div className="w-7 h-7 bg-purple-600 rounded-full flex items-center justify-center text-white font-semibold text-xs mt-0.5">
+                      {(message.sender === 'bot' ? 'AI' : message.character_name || 'U')[0]}
+                    </div>
+                    <div className="flex-1">
+                      <span className="font-semibold text-gray-900 text-base">
+                        {message.sender === 'bot' ? 'AI Assistant' : message.character_name}:
+                      </span>
+                      <span className="text-gray-700 ml-2">
+                        {message.text}
+                      </span>
+                    </div>
+                  </div>
+                  {message.audio_data && (
+                    <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                      <button 
+                        className="bg-purple-600 hover:bg-purple-700 text-white p-2 rounded-lg transition-colors duration-200 text-sm"
+                        onClick={() => {
+                          document.querySelectorAll('audio').forEach(a => {
+                            a.pause();
+                            a.currentTime = 0;
+                          });
+                          const audio = new Audio(message.audio_data);
+                          audio.play().catch(e => console.error('Audio play error:', e));
+                        }}
+                        title="Play Audio"
+                      >
+                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                          <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
+                        </svg>
+                      </button>
+                      {message.audio_id && (
+                        <button 
+                          className="bg-gray-600 hover:bg-gray-700 text-white px-3 py-2 rounded-lg text-xs font-medium transition-colors duration-200"
+                          onClick={() => {
+                            const audio = new Audio(message.audio_data);
+                            audio.addEventListener('loadedmetadata', () => {
+                              const ttsClips = mixerTracks.filter(t => t.type === 'tts' || t.type === 'sound');
+                              const lastEndTime = ttsClips.length > 0 
+                                ? Math.max(...ttsClips.map(t => (t.startTime || 0) + (t.duration || 0)))
+                                : 0;
+                              
+                              const newTrack = {
+                                id: Date.now(),
+                                name: `${message.character_name || 'Bot'}: ${message.text.substring(0, 30)}...`,
+                                audioData: message.audio_data,
+                                volume: 1.0,
+                                type: 'tts',
+                                duration: audio.duration || 3.0,
+                                startTime: lastEndTime
+                              };
+                              onTracksChange(prev => [...prev, newTrack]);
+                            });
+                            alert('Audio added to timeline! Go to Timeline Editor tab to edit.');
+                          }}
+                          title="Add to Timeline Editor"
+                        >
+                          + Timeline
+                        </button>
+                      )}
+                    </div>
                   )}
                 </div>
-              )}
+              </div>
             </div>
-            <div className="text-white/90 leading-relaxed text-lg">
-              {message.text}
-            </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
 
-      <div className="border border-purple-500/30 rounded-2xl p-6 bg-gradient-to-br from-black/80 via-purple-900/40 to-green-900/20 backdrop-blur-sm shadow-2xl shadow-purple-500/20">
-        <div className="flex items-center gap-6 mb-5 flex-wrap">
-          <div className="flex items-center gap-3">
-            <label className="font-semibold text-green-400 text-base">
-              Character:
+      {/* Input Controls - Takes 1 column */}
+      <div className="bg-white rounded-3xl p-6 card-shadow hover:card-shadow-hover transition-all duration-200 flex flex-col h-full">
+        <h2 className="text-2xl font-bold text-gray-900 mb-6">Create Message</h2>
+        
+        <div className="space-y-4 flex-1 flex flex-col justify-between">
+          <div>
+            <label className="block font-semibold text-gray-700 mb-2">
+              Character
             </label>
             <select
               value={selectedCharacter}
               onChange={(e) => setSelectedCharacter(e.target.value)}
-              className="px-4 py-3 border-2 border-purple-500/30 rounded-lg bg-black/50 text-white text-base font-medium transition-all duration-300 focus:outline-none focus:border-green-400 focus:shadow-md focus:shadow-green-400/30"
+              className="w-full px-4 py-3 border border-gray-200 rounded-xl bg-white text-gray-900 font-medium transition-all duration-200 focus:outline-none focus:border-purple-600 focus:ring-2 focus:ring-purple-100 hover:border-gray-300"
             >
               {characters.map((character, index) => (
                 <option key={index} value={character.name}>
@@ -191,64 +204,67 @@ function ChatArea({ characters, mixerTracks, onTracksChange }) {
               ))}
             </select>
           </div>
-        </div>
 
-        <div className="mb-4">
-          <input
-            type="text"
-            value={rephraseTags}
-            onChange={(e) => setRephraseTags(e.target.value)}
-            placeholder="Rephrase tags (optional): dramatic, intense, funny, etc."
-            className="w-full p-4 border-2 border-purple-500/30 rounded-xl text-base bg-black/50 text-white transition-all duration-300 focus:outline-none focus:border-green-400 focus:shadow-lg focus:shadow-green-400/30 placeholder-white/50"
-          />
-        </div>
-
-        {availableStyles.length > 0 && (
-          <div className="mb-4">
-            <label className="block text-green-400 font-semibold mb-3">
-              Voice Style for {selectedCharacter} (optional):
+          <div>
+            <label className="block font-semibold text-gray-700 mb-2">
+              Rephrase Tags (Optional)
             </label>
-            <div className="flex gap-3 flex-wrap">
-              {availableStyles.map(style => (
-                <button
-                  key={style}
-                  className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 backdrop-blur-xs ${
-                    selectedVoiceStyle === style
-                      ? 'bg-gradient-to-r from-purple-600 to-green-500 text-white font-bold shadow-md shadow-green-400/40'
-                      : 'bg-gradient-to-br from-purple-900/20 to-black/40 text-white/80 border border-purple-500/30 hover:bg-gradient-to-br hover:from-purple-600/30 hover:to-green-500/20 hover:border-green-400/50 hover:-translate-y-0.5'
-                  }`}
-                  onClick={() => setSelectedVoiceStyle(selectedVoiceStyle === style ? '' : style)}
-                >
-                  {style}
-                </button>
-              ))}
-            </div>
+            <input
+              type="text"
+              value={rephraseTags}
+              onChange={(e) => setRephraseTags(e.target.value)}
+              placeholder="dramatic, intense, funny, etc."
+              className="w-full px-4 py-3 border border-gray-200 rounded-xl bg-white text-gray-900 transition-all duration-200 focus:outline-none focus:border-purple-600 focus:ring-2 focus:ring-purple-100 hover:border-gray-300 placeholder-gray-500"
+            />
           </div>
-        )}
 
-        <div className="flex gap-4 items-end">
-          <textarea
-            value={inputText}
-            onChange={(e) => setInputText(e.target.value)}
-            placeholder={`Enter text as ${selectedCharacter}...`}
-            rows="3"
-            className="flex-1 p-4 border-2 border-purple-500/30 rounded-xl resize-vertical text-base bg-black/50 text-white transition-all duration-300 focus:outline-none focus:border-green-400 focus:shadow-lg focus:shadow-green-400/30 placeholder-white/50 min-h-[120px]"
-          />
-          <div className="flex flex-col gap-3">
-            <button 
-              onClick={handleRephrase} 
-              disabled={!inputText.trim()}
-              className="bg-gradient-to-r from-green-500 to-green-400 text-white px-6 py-4 rounded-xl font-semibold text-base min-w-[120px] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-green-400/40 disabled:bg-gradient-to-br disabled:from-gray-600/50 disabled:to-gray-700/50 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none"
-            >
-              Rephrase
-            </button>
-            <button 
-              onClick={sendMessage} 
-              disabled={!inputText.trim()}
-              className="bg-gradient-to-r from-purple-600 to-purple-500 text-white px-6 py-4 rounded-xl font-semibold text-base min-w-[120px] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-purple-500/40 disabled:bg-gradient-to-br disabled:from-gray-600/50 disabled:to-gray-700/50 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none"
-            >
-              Send
-            </button>
+          {availableStyles.length > 0 && (
+            <div>
+              <label className="block font-semibold text-gray-700 mb-2">
+                Voice Style for {selectedCharacter}
+              </label>
+              <select
+                value={selectedVoiceStyle}
+                onChange={(e) => setSelectedVoiceStyle(e.target.value)}
+                className="w-full px-4 py-3 border border-gray-200 rounded-xl bg-white text-gray-900 font-medium transition-all duration-200 focus:outline-none focus:border-purple-600 focus:ring-2 focus:ring-purple-100 hover:border-gray-300"
+              >
+                <option value="">Select voice style</option>
+                {availableStyles.map(style => (
+                  <option key={style} value={style}>{style}</option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          <div className="flex-1 flex flex-col">
+            <label className="block font-semibold text-gray-700 mb-2">
+              Message
+            </label>
+            <div className="flex gap-3 flex-1">
+              <textarea
+                value={inputText}
+                onChange={(e) => setInputText(e.target.value)}
+                placeholder={`Enter text as ${selectedCharacter}...`}
+                rows="4"
+                className="flex-1 px-4 py-3 border border-gray-200 rounded-xl resize-none bg-white text-gray-900 transition-all duration-200 focus:outline-none focus:border-purple-600 focus:ring-2 focus:ring-purple-100 hover:border-gray-300 placeholder-gray-500"
+              />
+              <div className="flex flex-col justify-end">
+                <button 
+                  onClick={handleRephrase} 
+                  disabled={!inputText.trim()}
+                  className="px-4 py-3 bg-gray-600 hover:bg-gray-700 text-white rounded-xl font-medium text-sm transition-all duration-200 disabled:bg-gray-300 disabled:cursor-not-allowed whitespace-nowrap mb-4"
+                >
+                  Rephrase
+                </button>
+                <button 
+                  onClick={sendMessage} 
+                  disabled={!inputText.trim()}
+                  className="px-4 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-xl font-medium text-sm transition-all duration-200 disabled:bg-gray-300 disabled:cursor-not-allowed whitespace-nowrap"
+                >
+                  Send
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </div>

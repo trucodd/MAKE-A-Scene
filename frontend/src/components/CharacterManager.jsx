@@ -52,30 +52,54 @@ function CharacterManager({ characters, onCreateCharacter, voices }) {
   };
 
   return (
-    <div className="max-w-4xl mx-auto">
-      <h2 className="text-3xl font-bold text-center mb-8 bg-gradient-to-r from-green-400 to-purple-500 bg-clip-text text-transparent">
-        Character Management
-      </h2>
+    <div className="max-w-5xl mx-auto">
+      <div className="text-center mb-8">
+        <h2 className="text-3xl font-bold text-gray-900 mb-2">
+          Character Management
+        </h2>
+        <p className="text-gray-600">Create and manage your story characters</p>
+      </div>
       
-      <form onSubmit={handleSubmit} className="bg-gradient-to-br from-black/80 via-purple-900/40 to-green-900/20 border border-purple-500/30 rounded-2xl p-8 mb-10 backdrop-blur-sm shadow-2xl shadow-purple-500/20">
-        <div className="mb-6">
-          <label htmlFor="name" className="block mb-2 font-semibold text-green-400 text-base">
-            Character Name:
-          </label>
-          <input
-            type="text"
-            id="name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="Enter character name"
-            className="w-full p-4 border-2 border-purple-500/30 rounded-xl text-base bg-black/50 text-white transition-all duration-300 focus:outline-none focus:border-green-400 focus:shadow-lg focus:shadow-green-400/30 placeholder-white/50"
-            required
-          />
+      <form onSubmit={handleSubmit} className="bg-white rounded-3xl p-8 mb-8 card-shadow hover:card-shadow-hover transition-all duration-200">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+          <div>
+            <label htmlFor="name" className="block mb-2 font-semibold text-gray-700">
+              Character Name
+            </label>
+            <input
+              type="text"
+              id="name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Enter character name"
+              className="w-full px-4 py-3 border border-gray-200 rounded-xl bg-white text-gray-900 transition-all duration-200 focus:outline-none focus:border-purple-600 focus:ring-2 focus:ring-purple-100 hover:border-gray-300 placeholder-gray-500"
+              required
+            />
+          </div>
+          
+          <div>
+            <label htmlFor="voiceId" className="block mb-2 font-semibold text-gray-700">
+              Voice
+            </label>
+            <select
+              id="voiceId"
+              value={voiceId}
+              onChange={(e) => setVoiceId(e.target.value)}
+              className="w-full px-4 py-3 border border-gray-200 rounded-xl bg-white text-gray-900 font-medium transition-all duration-200 focus:outline-none focus:border-purple-600 focus:ring-2 focus:ring-purple-100 hover:border-gray-300"
+            >
+              <option value="">Select Voice</option>
+              {voices.map(voice => (
+                <option key={voice.voiceId} value={voice.voiceId}>
+                  {voice.displayName}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
         
         <div className="mb-6">
-          <label htmlFor="description" className="block mb-2 font-semibold text-green-400 text-base">
-            Character Description:
+          <label htmlFor="description" className="block mb-2 font-semibold text-gray-700">
+            Character Description
           </label>
           <textarea
             id="description"
@@ -83,41 +107,22 @@ function CharacterManager({ characters, onCreateCharacter, voices }) {
             onChange={(e) => setDescription(e.target.value)}
             placeholder="Describe the character's personality, traits, and how they should behave..."
             rows="4"
-            className="w-full p-4 border-2 border-purple-500/30 rounded-xl text-base bg-black/50 text-white transition-all duration-300 focus:outline-none focus:border-green-400 focus:shadow-lg focus:shadow-green-400/30 placeholder-white/50 resize-vertical"
+            className="w-full px-4 py-3 border border-gray-200 rounded-xl bg-white text-gray-900 transition-all duration-200 focus:outline-none focus:border-purple-600 focus:ring-2 focus:ring-purple-100 hover:border-gray-300 placeholder-gray-500 resize-vertical"
             required
           />
         </div>
         
-        <div className="mb-6">
-          <label htmlFor="voiceId" className="block mb-2 font-semibold text-green-400 text-base">
-            Voice:
-          </label>
-          <select
-            id="voiceId"
-            value={voiceId}
-            onChange={(e) => setVoiceId(e.target.value)}
-            className="w-full p-4 border-2 border-purple-500/30 rounded-xl text-base bg-black/50 text-white transition-all duration-300 focus:outline-none focus:border-green-400 focus:shadow-lg focus:shadow-green-400/30"
-          >
-            <option value="">Select Voice</option>
-            {voices.map(voice => (
-              <option key={voice.voiceId} value={voice.voiceId}>
-                {voice.displayName}
-              </option>
-            ))}
-          </select>
-        </div>
-        
-        <div className="flex gap-4 justify-center">
+        <div className="flex gap-3 justify-center">
           <button 
             type="submit" 
-            className="bg-gradient-to-r from-green-500 to-green-400 text-white px-8 py-4 rounded-xl font-bold text-base transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-green-400/40"
+            className="bg-purple-600 hover:bg-purple-700 text-white px-8 py-3 rounded-xl font-semibold transition-all duration-200 hover:-translate-y-0.5"
           >
             {editingCharacter ? 'Update Character' : 'Create Character'}
           </button>
           {editingCharacter && (
             <button 
               type="button" 
-              className="bg-gradient-to-br from-gray-600/80 to-gray-700/80 text-white px-8 py-4 border-2 border-purple-500/30 rounded-xl font-semibold text-base transition-all duration-300 hover:bg-gradient-to-br hover:from-purple-600/30 hover:to-gray-600/80 hover:-translate-y-0.5"
+              className="bg-gray-500 hover:bg-gray-600 text-white px-8 py-3 rounded-xl font-semibold transition-all duration-200 hover:-translate-y-0.5"
               onClick={handleCancel}
             >
               Cancel
@@ -127,34 +132,47 @@ function CharacterManager({ characters, onCreateCharacter, voices }) {
       </form>
       
       <div>
-        <h3 className="text-green-400 text-2xl font-semibold mb-6 text-center">
-          Existing Characters
+        <h3 className="text-2xl font-bold text-gray-900 mb-6">
+          Your Characters
         </h3>
         {characters.length === 0 ? (
-          <p className="text-white/60 text-center text-lg">No characters created yet.</p>
+          <div className="bg-white rounded-3xl p-12 text-center card-shadow">
+            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg className="w-8 h-8 text-gray-400" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+              </svg>
+            </div>
+            <p className="text-gray-500 text-lg">No characters created yet.</p>
+            <p className="text-gray-400 text-sm mt-2">Create your first character to get started!</p>
+          </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {characters.map((character, index) => (
               <div 
                 key={index} 
-                className="bg-gradient-to-br from-black/60 via-purple-900/30 to-green-900/20 border border-purple-500/30 rounded-2xl p-6 backdrop-blur-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-purple-500/30 hover:border-green-400/50"
+                className="bg-white rounded-2xl p-6 card-shadow hover:card-shadow-hover transition-all duration-200 hover:-translate-y-1"
               >
-                <h4 className="text-xl font-bold mb-4 bg-gradient-to-r from-green-400 to-purple-500 bg-clip-text text-transparent">
-                  {character.name}
-                </h4>
-                <p className="text-white/80 leading-relaxed mb-4">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-12 h-12 bg-purple-600 rounded-full flex items-center justify-center text-white font-bold text-lg">
+                    {character.name[0]}
+                  </div>
+                  <h4 className="text-xl font-bold text-gray-900">
+                    {character.name}
+                  </h4>
+                </div>
+                <p className="text-gray-600 leading-relaxed mb-4 text-sm">
                   {character.description}
                 </p>
                 <div className="mb-4">
-                  <small className="text-green-400/70 text-sm font-medium">
+                  <span className="inline-block bg-gray-100 text-gray-600 text-xs font-medium px-3 py-1 rounded-full">
                     Voice: {character.voice_id}
-                  </small>
+                  </span>
                 </div>
                 <button 
-                  className="bg-gradient-to-r from-purple-600 to-purple-500 text-white px-6 py-3 rounded-lg font-semibold text-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md hover:shadow-purple-500/40"
+                  className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg font-medium text-sm transition-all duration-200 hover:-translate-y-0.5"
                   onClick={() => handleEdit(character)}
                 >
-                  Edit
+                  Edit Character
                 </button>
               </div>
             ))}

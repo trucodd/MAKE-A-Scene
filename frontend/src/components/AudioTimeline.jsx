@@ -16,9 +16,11 @@ function AudioTimeline({ tracks, onTracksChange }) {
   const PIXELS_PER_SECOND = 100 * zoom;
   const TRACK_HEIGHT = 60;
 
-  const totalDuration = tracks.length > 0 
+  const actualDuration = tracks.length > 0 
     ? Math.max(...tracks.map(track => (track.startTime || 0) + (track.duration || 0)))
-    : 10;
+    : 0;
+  
+  const totalDuration = Math.max(actualDuration + 5, 10);
 
   const formatTime = useCallback((seconds) => {
     const mins = Math.floor(seconds / 60);
@@ -52,31 +54,46 @@ function AudioTimeline({ tracks, onTracksChange }) {
     
     const spaces = [];
     
-    if (clips.length === 0 || (clips[0].startTime || 0) > 0) {
-      spaces.push({ start: 0, end: clips.length > 0 ? (clips[0].startTime || 0) : totalDuration });
-    }
-    
-    for (let i = 0; i < clips.length - 1; i++) {
-      const currentEnd = (clips[i].startTime || 0) + (clips[i].duration || 0);
-      const nextStart = clips[i + 1].startTime || 0;
-      if (nextStart > currentEnd + 0.1) {
-        spaces.push({ start: currentEnd, end: nextStart });
+    // Always add space from beginning if no clips or first clip doesn't start at 0
+    if (clips.length === 0) {
+      spaces.push({ start: 0, end: totalDuration });
+    } else {
+      // Space before first clip
+      if ((clips[0].startTime || 0) > 0) {
+        spaces.push({ start: 0, end: clips[0].startTime || 0 });
       }
-    }
-    
-    if (clips.length > 0) {
+      
+      // Spaces between clips
+      for (let i = 0; i < clips.length - 1; i++) {
+        const currentEnd = (clips[i].startTime || 0) + (clips[i].duration || 0);
+        const nextStart = clips[i + 1].startTime || 0;
+        if (nextStart > currentEnd + 0.1) {
+          spaces.push({ start: currentEnd, end: nextStart });
+        }
+      }
+      
+      // Space after last clip
       const lastEnd = (clips[clips.length - 1].startTime || 0) + (clips[clips.length - 1].duration || 0);
       if (lastEnd < totalDuration) {
         spaces.push({ start: lastEnd, end: totalDuration });
       }
     }
     
-    return spaces.filter(space => (space.end - space.start) > 0.5);
+    return spaces.filter(space => (space.end - space.start) > 0.2);
   };
 
   const [insertPosition, setInsertPosition] = useState(0);
   const [insertGapSize, setInsertGapSize] = useState(0);
   const [insertTrackType, setInsertTrackType] = useState('background');
+  const [isDragging, setIsDragging] = useState(false);
+  
+  const handleDragStart = useCallback(() => {
+    setIsDragging(true);
+  }, []);
+  
+  const handleDragEnd = useCallback(() => {
+    setTimeout(() => setIsDragging(false), 200);
+  }, []);
 
   const addBackgroundSound = (sound) => {
     const audio = new Audio(sound.url);
@@ -287,9 +304,9 @@ function AudioTimeline({ tracks, onTracksChange }) {
         const elapsed = (Date.now() - startTime) / 1000;
         const newPlayhead = startPlayhead + elapsed;
         
-        if (newPlayhead >= totalDuration) {
+        if (newPlayhead >= actualDuration) {
           setIsPlaying(false);
-          setPlayhead(totalDuration);
+          setPlayhead(actualDuration);
           if (audioRef.current?.stop) audioRef.current.stop();
           playbackInterval.current = null;
         } else {
@@ -316,45 +333,61 @@ function AudioTimeline({ tracks, onTracksChange }) {
   }, []);
 
   return (
-    <div className="bg-gradient-to-br from-black via-purple-900/50 to-green-900/20 text-white border border-purple-500/30 rounded-2xl overflow-hidden my-6 shadow-2xl shadow-purple-500/20">
-      <div className="bg-gradient-to-br from-black/80 via-purple-900/40 to-green-900/20 px-5 py-4 border-b border-purple-500/30">
-        <div className="flex items-center gap-5">
-          <button 
-            onClick={playFromPlayhead}
-            className="bg-gradient-to-br from-purple-600/30 to-green-500/30 text-white border border-purple-500/30 rounded-lg px-4 py-2.5 font-semibold text-sm transition-all duration-300 hover:bg-gradient-to-br hover:from-purple-600/50 hover:to-green-500/50 hover:-translate-y-0.5 hover:shadow-md hover:shadow-purple-500/30"
-          >
-            {isPlaying ? '⏸️' : '▶️'}
-          </button>
-          <span className="font-mono text-lg font-bold bg-gradient-to-r from-green-400 to-purple-500 bg-clip-text text-transparent">
-            {formatTime(playhead)}
-          </span>
-          <div className="flex items-center gap-2">
+    <div className="bg-white rounded-2xl overflow-hidden my-8 card-shadow border border-gray-200">
+      <div className="bg-white px-6 py-4 border-b border-gray-100">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-6">
+            <button 
+              onClick={playFromPlayhead}
+              className="bg-gray-900 hover:bg-gray-800 text-white rounded-xl px-6 py-3 font-medium transition-all duration-200 flex items-center gap-2 hover:-translate-y-0.5"
+            >
+              {isPlaying ? (
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>
+                </svg>
+              ) : (
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M8 5v14l11-7z"/>
+                </svg>
+              )}
+              <span>{isPlaying ? 'Pause' : 'Play'}</span>
+            </button>
+            <div className="font-mono text-lg font-medium text-gray-900">
+              {formatTime(playhead)}
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <span className="text-sm text-gray-600">Zoom</span>
             <button 
               onClick={() => setZoom(Math.max(0.25, zoom - 0.25))}
-              className="bg-gradient-to-br from-purple-600/30 to-green-500/30 text-white border border-purple-500/30 rounded-lg px-3 py-2 text-sm transition-all duration-300 hover:bg-gradient-to-br hover:from-purple-600/50 hover:to-green-500/50 hover:-translate-y-0.5"
+              className="p-2 hover:bg-gray-100 rounded-lg transition-colors duration-200"
             >
-              🔍-
+              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M19 13H5v-2h14v2z"/>
+              </svg>
             </button>
-            <span className="text-sm font-medium">{Math.round(zoom * 100)}%</span>
+            <span className="text-sm font-medium text-gray-900 min-w-[50px] text-center">{Math.round(zoom * 100)}%</span>
             <button 
               onClick={() => setZoom(Math.min(4, zoom + 0.25))}
-              className="bg-gradient-to-br from-purple-600/30 to-green-500/30 text-white border border-purple-500/30 rounded-lg px-3 py-2 text-sm transition-all duration-300 hover:bg-gradient-to-br hover:from-purple-600/50 hover:to-green-500/50 hover:-translate-y-0.5"
+              className="p-2 hover:bg-gray-100 rounded-lg transition-colors duration-200"
             >
-              🔍+
+              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+              </svg>
             </button>
           </div>
         </div>
       </div>
 
-      <div className="relative bg-gray-800 min-h-[200px] overflow-x-auto overflow-y-visible" ref={timelineRef} onClick={handleTimelineClick}>
-        <div className="h-8 bg-gray-700 border-b border-gray-600 relative">
+      <div className="relative bg-white min-h-[300px] overflow-x-auto overflow-y-visible" ref={timelineRef} onClick={handleTimelineClick}>
+        <div className="h-10 bg-gray-50 border-b border-gray-200 relative">
           {Array.from({ length: Math.ceil(totalDuration) + 1 }, (_, i) => (
             <div 
               key={i} 
-              className="absolute h-full border-l border-gray-500 pl-1 text-xs text-gray-300 flex items-center" 
+              className="absolute h-full border-l border-gray-300 pl-2 text-xs text-gray-600 flex items-center font-mono" 
               style={{ left: i * PIXELS_PER_SECOND }}
             >
-              <span>{formatTime(i)}</span>
+              {formatTime(i)}
             </div>
           ))}
         </div>
@@ -364,12 +397,12 @@ function AudioTimeline({ tracks, onTracksChange }) {
           style={{ left: 120 + playhead * PIXELS_PER_SECOND }}
         />
 
-        <div className="py-2.5">
-          <div className="flex mb-2.5 border-b border-gray-600">
-            <div className="w-30 px-2.5 bg-gray-700 text-gray-300 text-xs font-bold flex items-center justify-between border-r border-gray-600">
-              Main Audio (TTS)
+        <div className="py-4">
+          <div className="flex border-b border-gray-100">
+            <div className="w-32 px-4 py-3 bg-gray-50 text-gray-700 text-sm font-medium flex items-center border-r border-gray-200">
+              <span>TTS</span>
             </div>
-            <div className="flex-1 relative bg-gray-700 min-w-[800px]" style={{ height: TRACK_HEIGHT }}>
+            <div className="flex-1 relative bg-white min-w-[800px]" style={{ height: 80 }}>
               {tracks.filter(t => t.type === 'tts' || t.type === 'sound').map(clip => (
                 <AudioClip
                   key={clip.id}
@@ -387,15 +420,17 @@ function AudioTimeline({ tracks, onTracksChange }) {
                       ));
                     }
                   }}
+                  onDragStart={handleDragStart}
+                  onDragEnd={handleDragEnd}
                   playhead={playhead}
                   isTimelinePlaying={isPlaying}
                   formatTime={formatTime}
                 />
               ))}
-              {findEmptySpaces('tts').map((space, i) => (
+              {!isDragging && findEmptySpaces('tts').map((space, i) => (
                 <div
                   key={`tts-space-${i}`}
-                  className="absolute bg-white/10 border-2 border-dashed border-white/30 rounded flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity duration-200"
+                  className="absolute bg-white/5 border-2 border-dashed border-white/20 rounded flex items-center justify-center opacity-60 hover:opacity-100 hover:bg-white/10 transition-all duration-200"
                   style={{
                     left: space.start * PIXELS_PER_SECOND,
                     width: (space.end - space.start) * PIXELS_PER_SECOND,
@@ -404,14 +439,14 @@ function AudioTimeline({ tracks, onTracksChange }) {
                   }}
                 >
                   <button
-                    className="bg-gradient-to-br from-green-500/80 to-purple-600/80 text-white border border-green-500/50 rounded-full w-9 h-9 font-bold text-lg flex items-center justify-center transition-all duration-300 hover:bg-gradient-to-br hover:from-green-500 hover:to-purple-600 hover:scale-115 hover:shadow-lg hover:shadow-green-500/50"
+                    className="bg-white border border-gray-300 text-gray-600 rounded w-6 h-6 font-medium text-sm flex items-center justify-center transition-colors duration-200 hover:bg-gray-50 hover:border-gray-400"
                     onClick={() => {
                       setInsertPosition(space.start);
                       setInsertGapSize(space.end - space.start);
                       setInsertTrackType('tts');
                       setShowSoundPicker(true);
                     }}
-                    title="Add TTS sound here"
+                    title="Add sound to TTS track"
                   >
                     +
                   </button>
@@ -420,23 +455,11 @@ function AudioTimeline({ tracks, onTracksChange }) {
             </div>
           </div>
 
-          <div className="flex mb-2.5 border-b border-gray-600">
-            <div className="w-30 px-2.5 bg-blue-800 text-gray-300 text-xs font-bold flex items-center justify-between border-r border-gray-600">
-              Background
-              <button
-                className="bg-gradient-to-br from-green-500/80 to-purple-600/80 text-white border border-green-500/50 rounded-full w-6 h-6 font-bold text-base flex items-center justify-center transition-all duration-300 hover:bg-gradient-to-br hover:from-green-500 hover:to-purple-600 hover:scale-120 hover:shadow-md hover:shadow-green-500/50"
-                onClick={() => {
-                  setInsertPosition(0);
-                  setInsertGapSize(totalDuration);
-                  setInsertTrackType('background');
-                  setShowSoundPicker(true);
-                }}
-                title="Add background sound"
-              >
-                +
-              </button>
+          <div className="flex border-b border-gray-100">
+            <div className="w-32 px-4 py-3 bg-gray-50 text-gray-700 text-sm font-medium flex items-center border-r border-gray-200">
+              <span>Background</span>
             </div>
-            <div className="flex-1 relative bg-blue-700 min-w-[800px]" style={{ height: TRACK_HEIGHT }}>
+            <div className="flex-1 relative bg-white min-w-[800px]" style={{ height: 80 }}>
               {tracks.filter(t => t.type === 'background').map(clip => (
                 <AudioClip
                   key={clip.id}
@@ -454,15 +477,17 @@ function AudioTimeline({ tracks, onTracksChange }) {
                       ));
                     }
                   }}
+                  onDragStart={handleDragStart}
+                  onDragEnd={handleDragEnd}
                   playhead={playhead}
                   isTimelinePlaying={isPlaying}
                   formatTime={formatTime}
                 />
               ))}
-              {findEmptySpaces('background').map((space, i) => (
+              {!isDragging && findEmptySpaces('background').map((space, i) => (
                 <div
                   key={`bg-space-${i}`}
-                  className="absolute bg-white/10 border-2 border-dashed border-white/30 rounded flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity duration-200"
+                  className="absolute bg-white/5 border-2 border-dashed border-white/20 rounded flex items-center justify-center opacity-60 hover:opacity-100 hover:bg-white/10 transition-all duration-200"
                   style={{
                     left: space.start * PIXELS_PER_SECOND,
                     width: (space.end - space.start) * PIXELS_PER_SECOND,
@@ -471,7 +496,7 @@ function AudioTimeline({ tracks, onTracksChange }) {
                   }}
                 >
                   <button
-                    className="bg-gradient-to-br from-green-500/80 to-purple-600/80 text-white border border-green-500/50 rounded-full w-9 h-9 font-bold text-lg flex items-center justify-center transition-all duration-300 hover:bg-gradient-to-br hover:from-green-500 hover:to-purple-600 hover:scale-115 hover:shadow-lg hover:shadow-green-500/50"
+                    className="bg-white border border-gray-300 text-gray-600 rounded w-6 h-6 font-medium text-sm flex items-center justify-center transition-colors duration-200 hover:bg-gray-50 hover:border-gray-400"
                     onClick={() => {
                       setInsertPosition(space.start);
                       setInsertGapSize(space.end - space.start);
@@ -501,6 +526,7 @@ function AudioTimeline({ tracks, onTracksChange }) {
             onTracksChange(tracks.filter(t => t.id !== selectedClip));
             setSelectedClip(null);
           }}
+          onClose={() => setSelectedClip(null)}
         />
       )}
 
@@ -514,7 +540,7 @@ function AudioTimeline({ tracks, onTracksChange }) {
   );
 }
 
-function AudioClip({ clip, pixelsPerSecond, trackHeight, isSelected, onSelect, onDrag, playhead, isTimelinePlaying, formatTime }) {
+function AudioClip({ clip, pixelsPerSecond, trackHeight, isSelected, onSelect, onDrag, onDragStart, onDragEnd, playhead, isTimelinePlaying, formatTime }) {
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, startTime: 0 });
   const [isClipPlaying, setIsClipPlaying] = useState(false);
@@ -655,13 +681,13 @@ function AudioClip({ clip, pixelsPerSecond, trackHeight, isSelected, onSelect, o
       const isActive = isTimelinePlaying && currentPlayTime >= clipStart && currentPlayTime <= clipEnd && currentPlayTime >= barStartTime;
       
       if (isActive) {
-        const pulse = Math.sin(Date.now() * 0.01) * 0.3 + 0.7;
-        ctx.fillStyle = `rgba(0, 255, 100, ${pulse})`;
-        const animatedHeight = barHeight * (1 + pulse * 0.5);
+        const pulse = Math.sin(Date.now() * 0.02) * 0.4 + 0.6;
+        ctx.fillStyle = `rgba(34, 197, 94, ${pulse})`;
+        const animatedHeight = barHeight * (1.2 + pulse * 0.3);
         const animatedY = (height - animatedHeight) / 2;
         ctx.fillRect(x, animatedY, barWidth - 0.5, animatedHeight);
       } else {
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+        ctx.fillStyle = 'rgba(107, 114, 128, 0.7)';
         ctx.fillRect(x, y, barWidth - 0.5, barHeight);
       }
     });
@@ -697,7 +723,8 @@ function AudioClip({ clip, pixelsPerSecond, trackHeight, isSelected, onSelect, o
     e.preventDefault();
     setIsDragging(true);
     setDragStart({ x: e.clientX, startTime: clip.startTime || 0 });
-  }, [clip.startTime]);
+    if (onDragStart) onDragStart();
+  }, [clip.startTime, onDragStart]);
 
   useEffect(() => {
     const handleMouseMove = (e) => {
@@ -710,6 +737,7 @@ function AudioClip({ clip, pixelsPerSecond, trackHeight, isSelected, onSelect, o
 
     const handleMouseUp = () => {
       setIsDragging(false);
+      if (onDragEnd) onDragEnd();
     };
 
     if (isDragging) {
@@ -750,14 +778,16 @@ function AudioClip({ clip, pixelsPerSecond, trackHeight, isSelected, onSelect, o
       )}
       
       <div
-        className={`absolute rounded-lg cursor-move select-none overflow-hidden z-10 backdrop-blur-xs transition-all duration-300 hover:brightness-120 hover:-translate-y-0.5 ${
+        className={`absolute rounded cursor-move select-none overflow-hidden z-10 border ${
           clip.type === 'tts' 
-            ? 'bg-gradient-to-br from-green-500/80 to-green-600/80 border-2 border-green-500/60' 
-            : 'bg-gradient-to-br from-orange-500/80 to-orange-600/80 border-2 border-orange-500/60'
+            ? 'bg-green-100 border-green-300' 
+            : clip.type === 'sound'
+            ? 'bg-purple-100 border-purple-300'
+            : 'bg-blue-100 border-blue-300'
         } ${
           isSelected 
-            ? 'border-green-400 shadow-lg shadow-green-400/60 scale-102' 
-            : 'hover:shadow-md hover:shadow-purple-500/40'
+            ? 'border-2 border-gray-800' 
+            : 'hover:border-gray-400'
         }`}
         style={{
           left: clipLeft,
@@ -807,9 +837,9 @@ function AudioClip({ clip, pixelsPerSecond, trackHeight, isSelected, onSelect, o
         )}
         
         <div className="p-1 h-full flex flex-col justify-between">
-          <div className="flex justify-between items-center mb-0.5">
+          <div className="flex justify-between items-center mb-1">
             <button 
-              className="bg-gradient-to-br from-purple-600/80 to-green-500/80 border-none rounded text-white cursor-pointer text-xs font-semibold px-2 py-0.5 mr-2 transition-all duration-300 hover:bg-gradient-to-br hover:from-purple-600 hover:to-green-500 hover:scale-105"
+              className="bg-white border border-gray-300 text-gray-700 rounded text-xs font-medium px-2 py-1 transition-colors duration-200 hover:bg-gray-50"
               onClick={(e) => {
                 e.stopPropagation();
                 if (isClipPlaying) {
@@ -856,25 +886,27 @@ function AudioClip({ clip, pixelsPerSecond, trackHeight, isSelected, onSelect, o
             >
               {isClipPlaying ? '⏸️' : '▶️'}
             </button>
-            <div className="flex-1 text-xs font-semibold text-white text-shadow-sm overflow-hidden whitespace-nowrap text-ellipsis">
+            <div className="flex-1 text-xs font-medium text-gray-700 overflow-hidden whitespace-nowrap text-ellipsis px-1">
               {clip.name}
             </div>
             <button 
-              className="bg-white/20 border-none text-white text-xs w-4 h-4 rounded-full cursor-pointer flex items-center justify-center opacity-70 transition-all duration-200 hover:opacity-100 hover:bg-white/30"
+              className="bg-white border border-gray-300 text-gray-600 w-7 h-7 rounded cursor-pointer flex items-center justify-center transition-colors duration-200 hover:bg-gray-50"
               onClick={(e) => {
                 e.stopPropagation();
                 onSelect();
               }}
-              title="Clip Settings"
+              title="Settings"
             >
-              ⚙️
+              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12 15.5A3.5 3.5 0 0 1 8.5 12A3.5 3.5 0 0 1 12 8.5a3.5 3.5 0 0 1 3.5 3.5 3.5 3.5 0 0 1-3.5 3.5m7.43-2.53c.04-.32.07-.64.07-.97 0-.33-.03-.66-.07-1l2.11-1.63c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.31-.61-.22l-2.49 1c-.52-.39-1.06-.73-1.69-.98l-.37-2.65A.506.506 0 0 0 14 2h-4c-.25 0-.46.18-.5.42l-.37 2.65c-.63.25-1.17.59-1.69.98l-2.49-1c-.22-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64L4.57 11c-.04.34-.07.67-.07 1 0 .33.03.65.07.97l-2.11 1.66c-.19.15-.25.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1.01c.52.4 1.06.74 1.69.99l.37 2.65c.04.24.25.42.5.42h4c.25 0 .46-.18.5-.42l.37-2.65c.63-.26 1.17-.59 1.69-.99l2.49 1.01c.22.08.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.66Z"/>
+              </svg>
             </button>
           </div>
-          <div className="flex items-end gap-0.5 h-5 overflow-hidden">
+          <div className="flex items-end gap-0.5 h-8 overflow-hidden bg-white rounded border border-gray-200">
             <canvas 
               ref={canvasRef}
               width={clipWidth}
-              height={30}
+              height={32}
               style={{ width: '100%', height: '100%' }}
             />
           </div>
@@ -883,18 +915,10 @@ function AudioClip({ clip, pixelsPerSecond, trackHeight, isSelected, onSelect, o
       
       {trimTooltip.show && (
         <div 
-          className="trim-tooltip"
+          className="fixed bg-gray-900 text-white px-2 py-1 rounded-lg text-xs font-medium pointer-events-none z-50 card-shadow"
           style={{
-            position: 'fixed',
             left: trimTooltip.x,
-            top: trimTooltip.y,
-            background: 'rgba(0, 0, 0, 0.8)',
-            color: 'white',
-            padding: '4px 8px',
-            borderRadius: '4px',
-            fontSize: '12px',
-            pointerEvents: 'none',
-            zIndex: 1000
+            top: trimTooltip.y
           }}
         >
           {formatTime(trimTooltip.time)}
@@ -904,7 +928,7 @@ function AudioClip({ clip, pixelsPerSecond, trackHeight, isSelected, onSelect, o
   );
 }
 
-function ClipPropertiesPanel({ clip, onUpdate, onDelete }) {
+function ClipPropertiesPanel({ clip, onUpdate, onDelete, onClose }) {
   const resetTrim = () => {
     const originalDuration = clip.originalDuration || clip.duration;
     onUpdate({ 
@@ -917,82 +941,115 @@ function ClipPropertiesPanel({ clip, onUpdate, onDelete }) {
   const hasTrimming = (clip.inPoint > 0) || (clip.outPoint < (clip.originalDuration || clip.duration));
 
   return (
-    <div className="fixed right-5 top-1/2 transform -translate-y-1/2 bg-gray-800 text-white p-4 rounded-lg border border-gray-600 min-w-[200px] z-50">
-      <h4 className="m-0 mb-4 text-green-400">{clip.name}</h4>
+    <div className="bg-white border border-gray-200 rounded-2xl p-6 mt-4 card-shadow">
+      <div className="flex items-center justify-between mb-4 pb-3 border-b border-gray-100">
+        <h4 className="text-lg font-semibold text-gray-900 m-0">{clip.name}</h4>
+        <div className="flex items-center gap-2">
+          <div className={`w-3 h-3 rounded-full ${
+            clip.type === 'tts' ? 'bg-green-400' : 
+            clip.type === 'sound' ? 'bg-purple-400' : 'bg-blue-400'
+          }`}></div>
+          <button 
+            onClick={onClose}
+            className="text-gray-400 hover:text-gray-600 transition-colors duration-200 p-1 rounded-lg hover:bg-gray-50"
+            title="Close"
+          >
+            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+            </svg>
+          </button>
+        </div>
+      </div>
       
-      {(clip.type === 'background' || clip.type === 'sound') && (
-        <>
-          <div className="property-group">
-            <label>Start Time (seconds)</label>
+      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
+        {(clip.type === 'background' || clip.type === 'sound') && (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Start Time (s)</label>
             <input
               type="number"
               min="0"
               step="0.1"
               value={clip.startTime || 0}
               onChange={(e) => onUpdate({ startTime: parseFloat(e.target.value) })}
+              className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200"
             />
           </div>
-          
-          <div className="property-group">
-            <label>Duration (seconds)</label>
+        )}
+        
+        {(clip.type === 'background' || clip.type === 'sound') && (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Duration (s)</label>
             <input
               type="number"
               min="0.1"
               step="0.1"
               value={clip.duration || 0}
               onChange={(e) => onUpdate({ duration: parseFloat(e.target.value) })}
+              className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200"
             />
           </div>
-
-          {hasTrimming && (
-            <div className="property-group">
-              <button onClick={resetTrim} className="reset-trim-btn">↺ Reset Trim</button>
-            </div>
-          )}
-        </>
-      )}
-      
-      <div className="property-group">
-        <label>Volume</label>
-        <input
-          type="range"
-          min="0"
-          max="2"
-          step="0.1"
-          value={clip.volume || 1}
-          onChange={(e) => onUpdate({ volume: parseFloat(e.target.value) })}
-        />
-        <span>{Math.round((clip.volume || 1) * 100)}%</span>
+        )}
+        
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Volume</label>
+          <div className="flex items-center gap-2">
+            <input
+              type="range"
+              min="0"
+              max="2"
+              step="0.1"
+              value={clip.volume || 1}
+              onChange={(e) => onUpdate({ volume: parseFloat(e.target.value) })}
+              className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+            />
+            <span className="text-xs font-medium text-gray-600 min-w-[35px]">{Math.round((clip.volume || 1) * 100)}%</span>
+          </div>
+        </div>
+        
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Trim Start (s)</label>
+          <input
+            type="number"
+            min="0"
+            step="0.1"
+            value={clip.trimStart || 0}
+            onChange={(e) => onUpdate({ trimStart: parseFloat(e.target.value) })}
+            className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200"
+          />
+        </div>
+        
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Trim End (s)</label>
+          <input
+            type="number"
+            min="0"
+            step="0.1"
+            value={clip.trimEnd || 0}
+            onChange={(e) => onUpdate({ trimEnd: parseFloat(e.target.value) })}
+            className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200"
+          />
+        </div>
       </div>
       
-      <div className="property-group">
-        <label>Trim Start (seconds)</label>
-        <input
-          type="number"
-          min="0"
-          step="0.1"
-          value={clip.trimStart || 0}
-          onChange={(e) => onUpdate({ trimStart: parseFloat(e.target.value) })}
-        />
+      <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-100">
+        {hasTrimming && (
+          <button 
+            onClick={resetTrim} 
+            className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 hover:-translate-y-0.5"
+          >
+            ↺ Reset Trim
+          </button>
+        )}
+        <button 
+          onClick={onDelete} 
+          className="bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 rounded-xl px-4 py-2 text-sm font-medium transition-all duration-200 flex items-center gap-1 ml-auto hover:-translate-y-0.5"
+        >
+          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M19,4H15.5L14.5,3H9.5L8.5,4H5V6H19M6,19A2,2 0 0,0 8,21H16A2,2 0 0,0 18,19V7H6V19Z"/>
+          </svg>
+          Delete
+        </button>
       </div>
-      
-      <div className="property-group">
-        <label>Trim End (seconds)</label>
-        <input
-          type="number"
-          min="0"
-          step="0.1"
-          value={clip.trimEnd || 0}
-          onChange={(e) => onUpdate({ trimEnd: parseFloat(e.target.value) })}
-        />
-      </div>
-      
-      <button 
-        onClick={onDelete} 
-        className="bg-red-600 text-white border-none rounded px-3 py-2 cursor-pointer text-xs w-full mt-2.5 hover:bg-red-700 transition-colors duration-200"
-      >
-        🗑️ Delete Clip
-      </button>
     </div>
   );
 }
@@ -1063,48 +1120,75 @@ function SoundPicker({ onSelect, onClose }) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg w-11/12 max-w-2xl max-h-[95vh] overflow-y-auto flex flex-col">
-        <div className="flex justify-between items-center p-5 border-b border-gray-300">
-          <h4 className="m-0 text-gray-800">Select Background Sound</h4>
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col card-shadow-hover">
+        <div className="flex justify-between items-center p-6 border-b border-gray-100">
+          <h4 className="text-lg font-semibold text-gray-900 m-0">Select Background Sound</h4>
           <button 
             onClick={onClose}
-            className="bg-none border-none text-2xl cursor-pointer text-gray-600 hover:text-gray-800"
+            className="text-gray-400 hover:text-gray-600 transition-colors duration-200 p-1 rounded-lg hover:bg-gray-50"
+            title="Close"
           >
-            ×
+            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+            </svg>
           </button>
         </div>
         
-        <input
-          type="text"
-          placeholder="Search sounds..."
-          value={searchTerm}
-          onChange={handleSearch}
-          className="w-full p-2.5 border border-gray-300 rounded text-base mb-2.5"
-        />
+        <div className="p-6 border-b border-gray-100">
+          <input
+            type="text"
+            placeholder="Search sounds..."
+            value={searchTerm}
+            onChange={handleSearch}
+            className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200"
+          />
+        </div>
         
-        {loading && <div className="loading">Searching...</div>}
-        
-        <div className="p-5">
-          {sounds.map(sound => (
-            <div key={sound.id} className="flex justify-between items-center p-2.5 border-b border-gray-200 last:border-b-0">
-              <span className="text-gray-800">{sound.name}</span>
-              <div className="flex gap-2">
-                <button 
-                  onClick={() => handlePlayStop(sound)}
-                  className={`${playingSound === sound.id ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700'} text-white border-none rounded px-2 py-1 cursor-pointer text-xs transition-colors duration-200`}
-                >
-                  {playingSound === sound.id ? '⏹️' : '▶️'}
-                </button>
-                <button 
-                  onClick={() => onSelect(sound)}
-                  className="bg-blue-600 text-white border-none rounded px-2 py-1 cursor-pointer text-xs hover:bg-blue-700 transition-colors duration-200"
-                >
-                  Add
-                </button>
-              </div>
+        {loading && (
+          <div className="p-6 text-center text-gray-600">
+            <div className="inline-flex items-center gap-2">
+              <div className="w-4 h-4 border-2 border-purple-600 border-t-transparent rounded-full animate-spin"></div>
+              Searching...
             </div>
-          ))}
+          </div>
+        )}
+        
+        <div className="flex-1 overflow-y-auto p-6">
+          <div className="space-y-3">
+            {sounds.map(sound => (
+              <div key={sound.id} className="flex justify-between items-center p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors duration-200">
+                <span className="text-gray-900 font-medium">{sound.name}</span>
+                <div className="flex items-center gap-2">
+                  <button 
+                    onClick={() => handlePlayStop(sound)}
+                    className={`px-3 py-2 rounded-lg font-medium text-sm transition-all duration-200 flex items-center gap-1 ${
+                      playingSound === sound.id 
+                        ? 'bg-red-600 hover:bg-red-700 text-white' 
+                        : 'bg-green-600 hover:bg-green-700 text-white'
+                    }`}
+                    title={playingSound === sound.id ? 'Stop' : 'Play'}
+                  >
+                    {playingSound === sound.id ? (
+                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>
+                      </svg>
+                    ) : (
+                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M8 5v14l11-7z"/>
+                      </svg>
+                    )}
+                  </button>
+                  <button 
+                    onClick={() => onSelect(sound)}
+                    className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg font-medium text-sm transition-all duration-200 hover:-translate-y-0.5"
+                  >
+                    Add
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </div>
