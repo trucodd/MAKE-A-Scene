@@ -38,18 +38,26 @@ def generate_tts_audio(text: str, voice_id: str = "en-US-davis", voice_style: st
         )
         
         print(f"Murf API response status: {response.status_code}")
+        print(f"Murf API response: {response.text}")
         
         if response.status_code == 200:
             response_data = response.json()
+            print(f"Response data: {response_data}")
             audio_url = response_data.get("audioFile")
             
             if audio_url:
+                print(f"Downloading audio from: {audio_url}")
                 # Download the audio file
                 audio_response = requests.get(audio_url)
                 if audio_response.status_code == 200:
                     # Convert to base64
                     audio_base64 = base64.b64encode(audio_response.content).decode('utf-8')
+                    print(f"Audio generated successfully, size: {len(audio_base64)} chars")
                     return f"data:audio/mp3;base64,{audio_base64}"
+                else:
+                    print(f"Failed to download audio: {audio_response.status_code}")
+            else:
+                print("No audioFile URL in response")
                     
         print(f"TTS generation failed: {response.text}")
         return None

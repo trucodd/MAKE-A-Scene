@@ -34,12 +34,12 @@ def call_openrouter_api(prompt: str) -> str:
     """Call OpenRouter API directly"""
     try:
         headers = {
-            "Authorization": f"Bearer {os.getenv('OPENROUTER_API_KEY')}",
+            "Authorization": f"Bearer {os.getenv('GEMINI_KEY')}",
             "Content-Type": "application/json"
         }
         
         payload = {
-            "model": "deepseek/deepseek-chat-v3.1:free",
+            "model": "models/gemini-2.0-flash-exp",
             "messages": [{"role": "user", "content": prompt}],
             "temperature": 0.3,
             "max_tokens": 300,
