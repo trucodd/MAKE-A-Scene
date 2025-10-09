@@ -26,3 +26,25 @@ services:
       - ./frontend/public:/app/public
     depends_on:
       - backend
+      - script-mixer
+
+  script-mixer:
+    build:
+      context: ./script-mixer
+    ports:
+      - "8001:8001"
+    environment:
+      - GEMINI_KEY=${GEMINI_KEY}
+      - FREESOUND_API_KEY=${FREESOUND_API_KEY}
+      - MURF_API_KEY=${MURF_API_KEY}
+    volumes:
+      - ./script-mixer:/app
+      - ./backend:/app/backend
+      - ./.env:/app/.env
+      - mixer-sounds:/app/sounds
+      - mixer-scenes:/app/mixed_scenes
+    command: uvicorn main:app --host 0.0.0.0 --port 8001 --reload
+
+volumes:
+  mixer-sounds:
+  mixer-scenes:
