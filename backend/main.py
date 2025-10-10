@@ -34,12 +34,12 @@ def call_openrouter_api(prompt: str) -> str:
     """Call OpenRouter API directly"""
     try:
         headers = {
-            "Authorization": f"Bearer {os.getenv('GEMINI_KEY')}",
+            "Authorization": f"Bearer {os.getenv('OPENROUTER_API_KEY')}",
             "Content-Type": "application/json"
         }
         
         payload = {
-            "model": "models/gemini-2.0-flash-exp",
+            "model": "deepseek/deepseek-chat-v3.1:free",
             "messages": [{"role": "user", "content": prompt}],
             "temperature": 0.3,
             "max_tokens": 300,
@@ -199,29 +199,26 @@ async def send_message(message: SendMessage, db: Session = Depends(get_db)):
         # Generate TTS for the message
         audio_data = generate_tts_audio(message.text, voice_id, voice_style)
         
-        # Store user message
+        # Store user message with audio
+        audio_id = str(uuid.uuid4())
         user_msg = DBMessage(
             content=message.text,
             character_name=message.character_name,
+            audio_data=audio_data,
+            audio_id=audio_id,
             sender="user"
         )
         db.add(user_msg)
-        
-        # Store bot response with audio
-        audio_id = str(uuid.uuid4())
-        bot_msg = DBMessage(
-            content=f"🔊 Audio response for: {message.text}",
-            character_name=None,
-            audio_data=audio_data,
-            audio_id=audio_id,
-            sender="bot"
-        )
-        db.add(bot_msg)
         db.commit()
         
         return {
-            "user_message": {"text": user_msg.content, "character_name": user_msg.character_name, "sender": "user"},
-            "bot_response": {"text": bot_msg.content, "audio_data": bot_msg.audio_data, "audio_id": bot_msg.audio_id, "sender": "bot"}
+            "user_message": {
+                "text": user_msg.content, 
+                "character_name": user_msg.character_name, 
+                "audio_data": user_msg.audio_data,
+                "audio_id": user_msg.audio_id,
+                "sender": "user"
+            }
         }
         
     except Exception as e:
@@ -231,7 +228,7 @@ async def send_message(message: SendMessage, db: Session = Depends(get_db)):
 
 @app.get("/messages")
 async def get_messages(db: Session = Depends(get_db)):
-    messages = db.query(DBMessage).order_by(DBMessage.created_at).all()
+    messages = db.query(DBMessage).filter(DBMessage.sender == "user").order_by(DBMessage.created_at).all()
     return [{
         "text": m.content,
         "character_name": m.character_name,

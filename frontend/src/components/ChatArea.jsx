@@ -75,12 +75,8 @@ function ChatArea({ characters, mixerTracks, onTracksChange }) {
         voice_style: selectedVoiceStyle
       });
       
-      const { user_message, bot_response } = response.data;
-      const newMessages = [user_message];
-      if (bot_response) {
-        newMessages.push(bot_response);
-      }
-      setMessages(prev => [...prev, ...newMessages]);
+      const { user_message } = response.data;
+      setMessages(prev => [...prev, user_message]);
       
       // Auto-play TTS if available
       if (user_message && user_message.audio_data) {
@@ -110,17 +106,17 @@ function ChatArea({ characters, mixerTracks, onTracksChange }) {
       <div className="lg:col-span-2 bg-white rounded-3xl p-6 card-shadow hover:card-shadow-hover transition-all duration-200 flex flex-col">
         <h2 className="text-2xl font-bold text-gray-900 mb-6">Conversation</h2>
         <div className="flex-1 overflow-y-auto pr-4 -mr-4 scrollbar-thin" style={{maxHeight: 'calc(85vh - 120px)'}}>
-          {messages.map((message, index) => (
+          {messages.filter(message => message.sender === 'user').map((message, index) => (
             <div key={index} className="mb-2 group">
               <div className="bg-gray-50 rounded-xl p-3 hover:bg-gray-100 transition-colors duration-200">
                 <div className="flex items-start justify-between">
                   <div className="flex items-start gap-3 flex-1">
                     <div className="w-7 h-7 bg-purple-600 rounded-full flex items-center justify-center text-white font-semibold text-xs mt-0.5">
-                      {(message.sender === 'bot' ? 'AI' : message.character_name || 'U')[0]}
+                      {(message.character_name || 'U')[0]}
                     </div>
                     <div className="flex-1">
                       <span className="font-semibold text-gray-900 text-base">
-                        {message.sender === 'bot' ? 'AI Assistant' : message.character_name}:
+                        {message.character_name}:
                       </span>
                       <span className="text-gray-700 ml-2">
                         {message.text}
@@ -139,41 +135,37 @@ function ChatArea({ characters, mixerTracks, onTracksChange }) {
                           const audio = new Audio(message.audio_data);
                           audio.play().catch(e => console.error('Audio play error:', e));
                         }}
-                        title="Play Audio"
+                        title="Listen"
                       >
-                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                          <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
-                        </svg>
+                        🔊
                       </button>
-                      {message.audio_id && (
-                        <button 
-                          className="bg-gray-600 hover:bg-gray-700 text-white px-3 py-2 rounded-lg text-xs font-medium transition-colors duration-200"
-                          onClick={() => {
-                            const audio = new Audio(message.audio_data);
-                            audio.addEventListener('loadedmetadata', () => {
-                              const ttsClips = mixerTracks.filter(t => t.type === 'tts' || t.type === 'sound');
-                              const lastEndTime = ttsClips.length > 0 
-                                ? Math.max(...ttsClips.map(t => (t.startTime || 0) + (t.duration || 0)))
-                                : 0;
-                              
-                              const newTrack = {
-                                id: Date.now(),
-                                name: `${message.character_name || 'Bot'}: ${message.text.substring(0, 30)}...`,
-                                audioData: message.audio_data,
-                                volume: 1.0,
-                                type: 'tts',
-                                duration: audio.duration || 3.0,
-                                startTime: lastEndTime
-                              };
-                              onTracksChange(prev => [...prev, newTrack]);
-                            });
-                            alert('Audio added to timeline! Go to Timeline Editor tab to edit.');
-                          }}
-                          title="Add to Timeline Editor"
-                        >
-                          + Timeline
-                        </button>
-                      )}
+                      <button 
+                        className="bg-gray-600 hover:bg-gray-700 text-white px-3 py-2 rounded-lg text-xs font-medium transition-colors duration-200"
+                        onClick={() => {
+                          const audio = new Audio(message.audio_data);
+                          audio.addEventListener('loadedmetadata', () => {
+                            const ttsClips = mixerTracks.filter(t => t.type === 'tts' || t.type === 'sound');
+                            const lastEndTime = ttsClips.length > 0 
+                              ? Math.max(...ttsClips.map(t => (t.startTime || 0) + (t.duration || 0)))
+                              : 0;
+                            
+                            const newTrack = {
+                              id: Date.now(),
+                              name: `${message.character_name}: ${message.text.substring(0, 30)}...`,
+                              audioData: message.audio_data,
+                              volume: 1.0,
+                              type: 'tts',
+                              duration: audio.duration || 3.0,
+                              startTime: lastEndTime
+                            };
+                            onTracksChange(prev => [...prev, newTrack]);
+                          });
+                          alert('Audio added to timeline! Go to Timeline Editor tab to edit.');
+                        }}
+                        title="Add to Timeline"
+                      >
+                        + Timeline
+                      </button>
                     </div>
                   )}
                 </div>
