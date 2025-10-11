@@ -6,33 +6,48 @@ const AI_API_BASE = 'http://localhost:8001';
 
 function AISceneCreator({ characters, voices, onTracksChange }) {
   const [context, setContext] = useState('');
-  const [sceneCharacters, setSceneCharacters] = useState([]);
+  const [aiSceneCharacters, setAiSceneCharacters] = useState([]);
+  const [manualSceneCharacters, setManualSceneCharacters] = useState([]);
   const [script, setScript] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [isCreatingScene, setIsCreatingScene] = useState(false);
-  const [currentSceneId, setCurrentSceneId] = useState('');
+  const [aiSceneId, setAiSceneId] = useState('');
+  const [manualSceneId, setManualSceneId] = useState('');
   const [isGeneratingAudio, setIsGeneratingAudio] = useState(false);
-  const [audioUrl, setAudioUrl] = useState('');
+  const [aiAudioUrl, setAiAudioUrl] = useState('');
+  const [manualAudioUrl, setManualAudioUrl] = useState('');
   const [useManualInput, setUseManualInput] = useState(false);
-  const [manualScript, setManualScript] = useState('');
-  const [sceneTitle, setSceneTitle] = useState('');
 
   const addCharacter = () => {
-    setSceneCharacters([...sceneCharacters, { name: '', voiceId: '' }]);
+    if (useManualInput) {
+      setManualSceneCharacters([...manualSceneCharacters, { name: '', voiceId: '' }]);
+    } else {
+      setAiSceneCharacters([...aiSceneCharacters, { name: '', voiceId: '' }]);
+    }
   };
 
   const updateCharacter = (index, field, value) => {
-    const updated = [...sceneCharacters];
-    updated[index][field] = value;
-    setSceneCharacters(updated);
+    if (useManualInput) {
+      const updated = [...manualSceneCharacters];
+      updated[index][field] = value;
+      setManualSceneCharacters(updated);
+    } else {
+      const updated = [...aiSceneCharacters];
+      updated[index][field] = value;
+      setAiSceneCharacters(updated);
+    }
   };
 
   const removeCharacter = (index) => {
-    setSceneCharacters(sceneCharacters.filter((_, i) => i !== index));
+    if (useManualInput) {
+      setManualSceneCharacters(manualSceneCharacters.filter((_, i) => i !== index));
+    } else {
+      setAiSceneCharacters(aiSceneCharacters.filter((_, i) => i !== index));
+    }
   };
 
   const createScene = async () => {
-    if (!context.trim() || sceneCharacters.length === 0) {
+    if (!context.trim() || aiSceneCharacters.length === 0) {
       alert('Please fill in context and add characters');
       return;
     }
@@ -41,12 +56,12 @@ function AISceneCreator({ characters, voices, onTracksChange }) {
     try {
       const response = await axios.post(`${AI_API_BASE}/create-scene`, {
         description: context,
-        characters: sceneCharacters,
+        characters: aiSceneCharacters,
         style: "cinematic"
       });
       
       setScript(response.data.script);
-      setCurrentSceneId(response.data.scene_id);
+      setAiSceneId(response.data.scene_id);
     } catch (error) {
       console.error('Error creating scene:', error);
       alert('Error creating scene. Please try again.');
@@ -55,29 +70,7 @@ function AISceneCreator({ characters, voices, onTracksChange }) {
     }
   };
 
-  const createManualScene = async () => {
-    if (!manualScript.trim() || !sceneTitle.trim()) {
-      alert('Please fill in scene title and script');
-      return;
-    }
 
-    setIsCreatingScene(true);
-    try {
-      const response = await axios.post(`${AI_API_BASE}/create-manual-scene`, {
-        script: manualScript,
-        characters: sceneCharacters,
-        title: sceneTitle
-      });
-      
-      setScript(response.data.script);
-      setCurrentSceneId(response.data.scene_id);
-    } catch (error) {
-      console.error('Error creating manual scene:', error);
-      alert('Error creating manual scene. Please try again.');
-    } finally {
-      setIsCreatingScene(false);
-    }
-  };
 
   const processScene = async () => {
     // This function is now integrated into createScene
@@ -86,20 +79,49 @@ function AISceneCreator({ characters, voices, onTracksChange }) {
   };
 
   const generateAudio = async () => {
-    if (!currentSceneId) {
-      alert('No scene available to generate audio');
-      return;
-    }
+    if (useManualInput) {
+      // For manual input, create scene and generate audio in one step
+      if (!script.trim() || manualSceneCharacters.length === 0) {
+        alert('Please fill in script and add characters');
+        return;
+      }
 
-    setIsGeneratingAudio(true);
-    try {
-      const response = await axios.post(`${AI_API_BASE}/generate-audio/${currentSceneId}`);
-      setAudioUrl(response.data.mixed_audio_url || response.data.audio_url);
-    } catch (error) {
-      console.error('Error generating audio:', error);
-      alert('Error generating audio. Please try again.');
-    } finally {
-      setIsGeneratingAudio(false);
+      setIsGeneratingAudio(true);
+      try {
+        // Create manual scene first, then generate audio using same process as AI
+        const sceneResponse = await axios.post(`${AI_API_BASE}/create-manual-scene`, {
+          script: script,
+          characters: manualSceneCharacters,
+          title: 'Manual Scene'
+        });
+        
+        // Use the same audio generation as AI mode
+        const audioResponse = await axios.post(`${AI_API_BASE}/generate-audio/${sceneResponse.data.scene_id}`);
+        setManualAudioUrl(audioResponse.data.mixed_audio_url || audioResponse.data.audio_url);
+        setManualSceneId(sceneResponse.data.scene_id);
+      } catch (error) {
+        console.error('Error generating audio:', error);
+        alert('Error generating audio. Please try again.');
+      } finally {
+        setIsGeneratingAudio(false);
+      }
+    } else {
+      // For AI generation, use existing scene
+      if (!aiSceneId) {
+        alert('No scene available to generate audio');
+        return;
+      }
+
+      setIsGeneratingAudio(true);
+      try {
+        const response = await axios.post(`${AI_API_BASE}/generate-audio/${aiSceneId}`);
+        setAiAudioUrl(response.data.mixed_audio_url || response.data.audio_url);
+      } catch (error) {
+        console.error('Error generating audio:', error);
+        alert('Error generating audio. Please try again.');
+      } finally {
+        setIsGeneratingAudio(false);
+      }
     }
   };
 
@@ -110,7 +132,12 @@ function AISceneCreator({ characters, voices, onTracksChange }) {
         <h2 className="text-xl font-bold text-gray-900 mb-4">⚙️ Input Mode</h2>
         <div className="flex gap-4">
           <button
-            onClick={() => setUseManualInput(false)}
+            onClick={() => {
+              setUseManualInput(false);
+              // Clear manual input data when switching to AI mode
+              setManualAudioUrl('');
+              setManualSceneId('');
+            }}
             className={`px-4 py-2 rounded-xl font-medium transition-all duration-200 ${
               !useManualInput 
                 ? 'bg-purple-600 hover:bg-purple-700 text-white' 
@@ -120,7 +147,12 @@ function AISceneCreator({ characters, voices, onTracksChange }) {
             🤖 AI Generation
           </button>
           <button
-            onClick={() => setUseManualInput(true)}
+            onClick={() => {
+              setUseManualInput(true);
+              // Clear AI data when switching to manual mode
+              setAiAudioUrl('');
+              setAiSceneId('');
+            }}
             className={`px-4 py-2 rounded-xl font-medium transition-all duration-200 ${
               useManualInput 
                 ? 'bg-purple-600 hover:bg-purple-700 text-white' 
@@ -151,34 +183,7 @@ function AISceneCreator({ characters, voices, onTracksChange }) {
         </div>
       )}
 
-      {/* Manual Input Section */}
-      {useManualInput && (
-        <div className="bg-white rounded-3xl p-6 card-shadow hover:card-shadow-hover transition-all duration-200">
-          <h2 className="text-xl font-bold text-gray-900 mb-4">✍️ Manual Scene Input</h2>
-          <div className="space-y-4">
-            <input
-              type="text"
-              value={sceneTitle}
-              onChange={(e) => setSceneTitle(e.target.value)}
-              placeholder="Scene title (e.g., 'Dramatic Confrontation')"
-              className="w-full bg-white border border-gray-200 rounded-xl p-3 text-gray-900 placeholder-gray-500 focus:outline-none focus:border-purple-600 focus:ring-2 focus:ring-purple-100"
-            />
-            <textarea
-              value={manualScript}
-              onChange={(e) => setManualScript(e.target.value)}
-              placeholder={`Enter your complete scene script here...
 
-Example format:
-[SCENE: A dark alley at night]
-JOHN: "We need to talk."
-[SFX: footsteps echoing]
-MARY: "I've been waiting for you."
-[CAMERA: Close-up on Mary's face]`}
-              className="w-full h-40 bg-white border border-gray-200 rounded-xl p-3 text-gray-900 placeholder-gray-500 resize-none focus:outline-none focus:border-purple-600 focus:ring-2 focus:ring-purple-100 font-mono text-sm"
-            />
-          </div>
-        </div>
-      )}
 
       {/* Characters Section */}
       <div className="bg-white rounded-3xl p-6 card-shadow hover:card-shadow-hover transition-all duration-200">
@@ -193,7 +198,7 @@ MARY: "I've been waiting for you."
         </div>
         
         <div className="space-y-3">
-          {sceneCharacters.map((char, index) => (
+          {(useManualInput ? manualSceneCharacters : aiSceneCharacters).map((char, index) => (
             <div key={index} className="flex gap-3 items-center">
               <input
                 type="text"
@@ -221,7 +226,7 @@ MARY: "I've been waiting for you."
             </div>
           ))}
           
-          {sceneCharacters.length === 0 && (
+          {(useManualInput ? manualSceneCharacters : aiSceneCharacters).length === 0 && (
             <p className="text-gray-500 text-center py-4">No characters added yet</p>
           )}
         </div>
@@ -231,13 +236,20 @@ MARY: "I've been waiting for you."
       <div className="bg-white rounded-3xl p-6 card-shadow hover:card-shadow-hover transition-all duration-200">
         <h2 className="text-xl font-bold text-gray-900 mb-4">📝 Script</h2>
         <div className="text-sm text-gray-600 mb-3">
-          Use @CharacterName: "dialogue" format. Example: @John: "Hello there!" @Mary: "Hi John!"
+          {useManualInput 
+            ? 'Enter your complete scene script with format: [SCENE: description], CHARACTER: "dialogue", [SFX: effect]'
+            : 'Generated script will appear here after creating scene'
+          }
         </div>
         <textarea
           value={script}
           onChange={(e) => setScript(e.target.value)}
-          placeholder="@John: &quot;Hello there!&quot;&#10;@Mary: &quot;Hi John, how are you?&quot;&#10;@John: &quot;I'm doing great, thanks for asking!&quot;"
-          className="w-full h-40 bg-white border border-gray-200 rounded-xl p-3 text-gray-900 placeholder-gray-500 resize-none focus:outline-none focus:border-purple-600 focus:ring-2 focus:ring-purple-100 font-mono text-sm"
+          placeholder={useManualInput 
+            ? `[SCENE: A dark alley at night]\n[SFX: rain]\nJOHN: "We need to talk."\n[SFX: footsteps]\nMARY: "I've been waiting for you."`
+            : 'Generated script will appear here...'
+          }
+          readOnly={!useManualInput}
+          className={`w-full h-40 bg-white border border-gray-200 rounded-xl p-3 text-gray-900 placeholder-gray-500 resize-none focus:outline-none focus:border-purple-600 focus:ring-2 focus:ring-purple-100 font-mono text-sm ${!useManualInput ? 'bg-gray-50' : ''}`}
         />
       </div>
 
@@ -246,30 +258,32 @@ MARY: "I've been waiting for you."
       {/* Action Buttons */}
       <div className="flex flex-col sm:flex-row gap-4 justify-center">
         {!useManualInput ? (
-          <button
-            onClick={createScene}
-            disabled={isCreatingScene || (!useManualInput && (sceneCharacters.length === 0 || !context.trim())) || (useManualInput && (!manualScript.trim() || !sceneTitle.trim()))}
-            className="px-8 py-3 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-xl transition-all duration-200 hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0"
-          >
-            {isCreatingScene ? '🔄 AI Agent Working...' : '🎬 Create Complete Scene'}
-          </button>
+          <>
+            <button
+              onClick={createScene}
+              disabled={isCreatingScene || (aiSceneCharacters.length === 0 || !context.trim())}
+              className="px-8 py-3 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-xl transition-all duration-200 hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0"
+            >
+              {isCreatingScene ? '🔄 AI Agent Working...' : '🎬 Create Scene'}
+            </button>
+            
+            {aiSceneId && (
+              <button
+                onClick={generateAudio}
+                disabled={isGeneratingAudio}
+                className="px-8 py-3 bg-gray-600 hover:bg-gray-700 text-white font-bold rounded-xl transition-all duration-200 hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0"
+              >
+                {isGeneratingAudio ? '🎵 Generating Audio...' : '🎵 Generate Audio'}
+              </button>
+            )}
+          </>
         ) : (
           <button
-            onClick={createManualScene}
-            disabled={isCreatingScene || !manualScript.trim() || !sceneTitle.trim()}
+            onClick={generateAudio}
+            disabled={isGeneratingAudio || !script.trim() || manualSceneCharacters.length === 0}
             className="px-8 py-3 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-xl transition-all duration-200 hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0"
           >
-            {isCreatingScene ? '✍️ Creating Manual Scene...' : '✍️ Create Manual Scene'}
-          </button>
-        )}
-        
-        {currentSceneId && (
-          <button
-            onClick={generateAudio}
-            disabled={isGeneratingAudio}
-            className="px-8 py-3 bg-gray-600 hover:bg-gray-700 text-white font-bold rounded-xl transition-all duration-200 hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0"
-          >
-            {isGeneratingAudio ? '🎵 Generating Audio...' : '🎵 Generate MP3 Audio'}
+            {isGeneratingAudio ? '🎵 Generating Audio...' : '🎵 Generate Audio'}
           </button>
         )}
       </div>
@@ -277,15 +291,15 @@ MARY: "I've been waiting for you."
 
 
       {/* Audio Player */}
-      {audioUrl && (
+      {((!useManualInput && aiAudioUrl) || (useManualInput && manualAudioUrl)) && (
         <div className="bg-white rounded-3xl p-6 card-shadow hover:card-shadow-hover transition-all duration-200">
           <h2 className="text-xl font-bold text-gray-900 mb-4">🎵 Generated Audio</h2>
           <audio controls className="w-full">
-            <source src={audioUrl} type="audio/mpeg" />
+            <source src={useManualInput ? manualAudioUrl : aiAudioUrl} type="audio/mpeg" />
             Your browser does not support the audio element.
           </audio>
           <div className="mt-2 text-sm text-gray-600">
-            Audio URL: <a href={audioUrl} target="_blank" rel="noopener noreferrer" className="text-purple-600 hover:underline">{audioUrl}</a>
+            Audio URL: <a href={useManualInput ? manualAudioUrl : aiAudioUrl} target="_blank" rel="noopener noreferrer" className="text-purple-600 hover:underline">{useManualInput ? manualAudioUrl : aiAudioUrl}</a>
           </div>
         </div>
       )}
