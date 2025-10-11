@@ -300,17 +300,16 @@ class SceneCreatorAgent:
                                                         io.BytesIO(sfx_response.content)
                                                     )
                                                     
-                                                    # Process the sound effect
+                                                    # Process the sound effect based on type
                                                     # Limit duration to 4 seconds max
                                                     if len(sfx_segment) > 4000:
                                                         sfx_segment = sfx_segment[:4000]
                                                     
-                                                    # Fade in/out to avoid clicks
-                                                    if len(sfx_segment) > 200:
+                                                    # Only fade non-ambient sounds to avoid clicks
+                                                    if len(sfx_segment) > 200 and not any(word in sfx_desc.lower() for word in ['rain', 'wind', 'ambient', 'atmosphere']):
                                                         sfx_segment = sfx_segment.fade_in(100).fade_out(100)
                                                     
-                                                    # Reduce volume
-                                                    sfx_segment = sfx_segment - 10  # -10dB
+                                                    # Keep original volume for intelligent mixing later
                                                     
                                                     # Save processed SFX
                                                     sfx_filename = f"sfx_{i}_{sfx_desc.replace(' ', '_')[:15]}.mp3"
@@ -345,90 +344,92 @@ class SceneCreatorAgent:
                         print(f"Error processing SFX '{sfx_desc}': {e}")
                         continue
             
-            # Step 3: Create intelligent mixed audio with proper timing
+            # Step 3: Parse script for intelligent SFX timing
+            script_lines = scene['script'].split('\n')
+            script_timeline = []  # Track script order: dialogue, sfx, etc.
             
-            # Create base audio from TTS with proper spacing
+            dialogue_index = 0
+            sfx_index = 0
+            
+            for line in script_lines:
+                line = line.strip()
+                if not line:
+                    continue
+                    
+                # Check if it's dialogue
+                dialogue_match = re.match(r'([A-Z][A-Z\s]+):\s*"([^"]+)"', line)
+                if dialogue_match and dialogue_index < len(tts_files):
+                    script_timeline.append({
+                        'type': 'dialogue',
+                        'index': dialogue_index,
+                        'character': dialogue_match.group(1),
+                        'text': dialogue_match.group(2)
+                    })
+                    dialogue_index += 1
+                    
+                # Check if it's SFX
+                elif '[SFX:' in line and sfx_index < len(sfx_files):
+                    script_timeline.append({
+                        'type': 'sfx',
+                        'index': sfx_index,
+                        'description': sfx_files[sfx_index]['description']
+                    })
+                    sfx_index += 1
+            
+            # Step 4: Build audio with minimal gaps - focus on dialogue flow
             final_audio = AudioSegment.empty()
-            dialogue_positions = []  # Track where each dialogue is placed
+            ambient_sounds = []  # Store ambient sounds for background overlay
             
-            # Add all TTS files with natural spacing
-            print(f"Building base audio from {len(tts_files)} TTS files")
-            current_position = 0
-            for i, tts_file in enumerate(tts_files):
-                try:
+            print(f"Building audio from script timeline: {len(script_timeline)} elements")
+            
+            for i, item in enumerate(script_timeline):
+                if item['type'] == 'dialogue':
+                    tts_file = tts_files[item['index']]
                     tts_path = f"tts_audio/{tts_file['filename']}"
+                    
                     if os.path.exists(tts_path):
                         tts_segment = AudioSegment.from_mp3(tts_path)
-                        
-                        # Add some silence before dialogue (except first)
-                        if i > 0:
-                            pause_duration = 800  # 0.8s between dialogues
-                            final_audio += AudioSegment.silent(duration=pause_duration)
-                            current_position += pause_duration
-                        
-                        # Record dialogue position for SFX timing
-                        dialogue_positions.append({
-                            'start': current_position,
-                            'end': current_position + len(tts_segment),
-                            'character': tts_file['character']
-                        })
-                        
                         final_audio += tts_segment
-                        current_position += len(tts_segment)
-                        print(f"Added TTS {i+1}: {tts_file['character']} at {current_position/1000:.1f}s")
-                except Exception as e:
-                    print(f"Error loading TTS {tts_file['filename']}: {e}")
-                    continue
-            
-            # Add sound effects strategically
-            print(f"Overlaying {len(sfx_files)} sound effects")
-            for i, sfx_file in enumerate(sfx_files):
-                try:
+                        print(f"Added dialogue: {item['character']}")
+                        
+                        # Only add small pause between different speakers
+                        next_item = script_timeline[i+1] if i+1 < len(script_timeline) else None
+                        if next_item and next_item['type'] == 'dialogue':
+                            final_audio += AudioSegment.silent(duration=300)  # Just 0.3s
+                        
+                elif item['type'] == 'sfx':
+                    sfx_file = sfx_files[item['index']]
+                    
                     if 'local_path' in sfx_file and os.path.exists(sfx_file['local_path']):
                         sfx_segment = AudioSegment.from_mp3(sfx_file['local_path'])
-                        
-                        # Determine placement strategy based on SFX type
                         sfx_desc = sfx_file['description'].lower()
                         
+                        # Only add essential SFX, skip minor ones
                         if any(word in sfx_desc for word in ['rain', 'wind', 'ambient', 'atmosphere']):
-                            # Ambient sounds: play throughout as background with seamless looping
-                            if len(final_audio) > len(sfx_segment):
-                                # Create seamless loop by building manually
-                                extended_sfx = AudioSegment.empty()
-                                while len(extended_sfx) < len(final_audio):
-                                    extended_sfx += sfx_segment
-                                extended_sfx = extended_sfx[:len(final_audio)]
-                                final_audio = final_audio.overlay(extended_sfx)
-                                print(f"Added ambient SFX: {sfx_desc} (seamless loop)")
-                            else:
-                                final_audio = final_audio.overlay(sfx_segment)
-                                print(f"Added ambient SFX: {sfx_desc} (overlay)")
-                        
-                        elif any(word in sfx_desc for word in ['door', 'car', 'engine', 'slam', 'crash']):
-                            # Action sounds: place between dialogues
-                            if dialogue_positions and i < len(dialogue_positions) - 1:
-                                # Place between current and next dialogue
-                                placement_pos = dialogue_positions[i]['end'] + 200  # 0.2s after dialogue ends
-                                final_audio = final_audio.overlay(sfx_segment, position=placement_pos)
-                                print(f"Added action SFX: {sfx_desc} at {placement_pos/1000:.1f}s")
-                            else:
-                                # Place at end if no more dialogues
-                                final_audio = final_audio.overlay(sfx_segment, position=len(final_audio)-len(sfx_segment))
-                                print(f"Added action SFX: {sfx_desc} at end")
-                        
-                        else:
-                            # General sounds: distribute evenly
-                            if len(final_audio) > 0:
-                                placement_pos = (i * len(final_audio)) // max(len(sfx_files), 1)
-                                final_audio = final_audio.overlay(sfx_segment, position=placement_pos)
-                                print(f"Added general SFX: {sfx_desc} at {placement_pos/1000:.1f}s")
-                            else:
-                                final_audio += sfx_segment
-                                print(f"Added SFX: {sfx_desc} as base")
-                                
-                except Exception as e:
-                    print(f"Error overlaying SFX {sfx_file['description']}: {e}")
-                    continue
+                            # Background sounds: store for overlay
+                            sfx_segment = sfx_segment - 20
+                            ambient_sounds.append(sfx_segment)
+                            print(f"Stored ambient SFX: {sfx_desc} (background)")
+                        elif any(word in sfx_desc for word in ['explosion', 'crash', 'thunder', 'gunshot', 'scream', 'door slam']):
+                            # Only important dramatic sounds
+                            sfx_segment = sfx_segment - 5
+                            final_audio += sfx_segment
+                            print(f"Added important SFX: {sfx_desc}")
+                        # Skip minor SFX like footsteps, whispers, etc. to avoid interrupting dialogue flow
+            
+            # Step 6: Overlay ambient sounds as continuous background
+            for ambient_sfx in ambient_sounds:
+                if len(final_audio) > len(ambient_sfx):
+                    # Create seamless loop for background
+                    extended_sfx = AudioSegment.empty()
+                    while len(extended_sfx) < len(final_audio):
+                        extended_sfx += ambient_sfx
+                    extended_sfx = extended_sfx[:len(final_audio)]
+                    final_audio = final_audio.overlay(extended_sfx)
+                    print(f"Overlaid ambient background (seamless loop)")
+                else:
+                    final_audio = final_audio.overlay(ambient_sfx)
+                    print(f"Overlaid ambient background")
             
             # Step 4: Export final mixed scene with normalization
             if len(final_audio) > 0:
@@ -459,7 +460,6 @@ class SceneCreatorAgent:
                     "sfx_files": sfx_files,
                     "mixed_audio_url": mixed_url,
                     "duration_seconds": len(final_audio) / 1000,
-                    "dialogue_positions": dialogue_positions,
                     "final_loudness_dbfs": final_audio.dBFS,
                     "status": "mixed_complete"
                 }
