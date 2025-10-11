@@ -391,14 +391,15 @@ class SceneCreatorAgent:
                         sfx_desc = sfx_file['description'].lower()
                         
                         if any(word in sfx_desc for word in ['rain', 'wind', 'ambient', 'atmosphere']):
-                            # Ambient sounds: play throughout as background
+                            # Ambient sounds: play throughout as background with seamless looping
                             if len(final_audio) > len(sfx_segment):
-                                # Loop ambient sound to cover full duration
-                                loops_needed = (len(final_audio) // len(sfx_segment)) + 1
-                                extended_sfx = sfx_segment * loops_needed
+                                # Create seamless loop by building manually
+                                extended_sfx = AudioSegment.empty()
+                                while len(extended_sfx) < len(final_audio):
+                                    extended_sfx += sfx_segment
                                 extended_sfx = extended_sfx[:len(final_audio)]
                                 final_audio = final_audio.overlay(extended_sfx)
-                                print(f"Added ambient SFX: {sfx_desc} (looped background)")
+                                print(f"Added ambient SFX: {sfx_desc} (seamless loop)")
                             else:
                                 final_audio = final_audio.overlay(sfx_segment)
                                 print(f"Added ambient SFX: {sfx_desc} (overlay)")
