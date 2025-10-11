@@ -68,24 +68,43 @@ class SceneCreatorAgent:
         scene_id = str(uuid.uuid4())
         
         # Prepare the script generation prompt with rich sound effects
+        character_names = [char.get('name', '').upper() for char in characters if char.get('name')]
+        
+        if not character_names:
+            return {
+                "scene_id": scene_id,
+                "script": "",
+                "audio_files": [],
+                "mixed_audio_path": "",
+                "status": "error: No characters provided"
+            }
+        
         workflow_prompt = f"""
         Create a detailed cinematic script for: "{description}"
         
-        Characters available: {characters}
-        Style: {style}
+        MANDATORY: You MUST use ONLY these exact character names: {', '.join(character_names)}
+        DO NOT create new character names. Use ONLY: {', '.join(character_names)}
         
-        Format the script with:
+        CRITICAL FORMAT REQUIREMENTS:
         - Scene descriptions in [SCENE: description]
-        - Character dialogue as CHARACTER: "dialogue"
-        - Sound effect cues as [SFX: effect description] (include many atmospheric and action sounds)
+        - Character dialogue MUST be: CHARACTER_NAME: "dialogue" (use ONLY these names: {', '.join(character_names)})
+        - Sound effect cues as [SFX: effect description] (include many: rain, footsteps, thunder, car door slam, engine start, tires screeching, etc.)
         - Camera directions as [CAMERA: direction]
         
-        Include rich sound effects throughout the scene for atmosphere, dialogue, and actions.
+        Example format:
+        [SCENE: A dark alley at midnight, rain falling]
+        [SFX: rain]
+        {character_names[0]}: "We need to talk about what happened."
+        [SFX: footsteps]
+        {character_names[1] if len(character_names) > 1 else character_names[0]}: "I've been waiting for you to say that."
+        [SFX: thunder]
+        
+        REMEMBER: Use ONLY these character names: {', '.join(character_names)}
         Make it engaging and cinematic with detailed sound design.
         """
         
         try:
-            # Generate script with sound effects using Gemma
+            # Generate script with sound effects using Gemini
             script_result = self.script_tool._run(workflow_prompt)
             
             # Store the scene (script only)
@@ -170,12 +189,16 @@ class SceneCreatorAgent:
             dialogue_pattern = r'([A-Z][A-Z\s]+):\s*"([^"]+)"'
             matches = re.findall(dialogue_pattern, scene['script'])
             
-            # Create character to voice mapping
+            # Create character to voice mapping with robust name matching
             character_voices = {}
             for char in scene.get('characters', []):
-                char_name = char.get('name', '').upper()
+                char_name = char.get('name', '').upper().strip()
                 voice_id = char.get('voiceId', 'en-US-davis')  # Default voice
-                character_voices[char_name] = voice_id
+                if char_name:
+                    character_voices[char_name] = voice_id
+                    # Also add variations for robust matching
+                    character_voices[char_name.replace(' ', '')] = voice_id
+                    character_voices[char_name.split()[0]] = voice_id  # First name only
             
             print(f"Character voice mapping: {character_voices}")
             
@@ -183,8 +206,13 @@ class SceneCreatorAgent:
             if matches:
                 from tts_handler import generate_tts_audio
                 for i, (character, dialogue) in enumerate(matches):
-                    # Get voice ID for this character, fallback to default
-                    voice_id = character_voices.get(character.strip(), 'en-US-davis')
+                    # Get voice ID for this character with robust matching
+                    char_clean = character.strip().upper()
+                    voice_id = (character_voices.get(char_clean) or 
+                               character_voices.get(char_clean.replace(' ', '')) or 
+                               character_voices.get(char_clean.split()[0]) if char_clean.split() else None or
+                               'en-US-davis')  # Final fallback
+                    
                     # Map invalid voice IDs to valid Murf IDs
                     voice_mapping = {
                         'en-US-aria': 'en-US-jenny',

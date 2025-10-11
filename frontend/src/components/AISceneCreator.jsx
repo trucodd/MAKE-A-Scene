@@ -94,7 +94,7 @@ function AISceneCreator({ characters, voices, onTracksChange }) {
     setIsGeneratingAudio(true);
     try {
       const response = await axios.post(`${AI_API_BASE}/generate-audio/${currentSceneId}`);
-      setAudioUrl(response.data.audio_url);
+      setAudioUrl(response.data.mixed_audio_url || response.data.audio_url);
     } catch (error) {
       console.error('Error generating audio:', error);
       alert('Error generating audio. Please try again.');

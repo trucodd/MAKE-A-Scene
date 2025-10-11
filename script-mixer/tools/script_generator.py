@@ -10,21 +10,11 @@ load_dotenv(dotenv_path="../../.env")
 
 class ScriptGeneratorTool(BaseTool):
     name: str = "script_generator"
-    description: str = "Generate detailed cinematic scripts from scene descriptions"
+    description: str = "Generate detailed cinematic scripts from scene descriptions with specific characters"
     
     def _run(self, query: str, run_manager: Optional[CallbackManagerForToolRun] = None) -> str:
-        """Generate a cinematic script from description"""
-        prompt = f"""
-        Create a detailed cinematic script for: {query}
-        
-        Format the script with:
-        - Scene descriptions in [SCENE: description]
-        - Character dialogue as CHARACTER: "dialogue"
-        - Sound effect cues as [SFX: effect description]
-        - Camera directions as [CAMERA: direction]
-        
-        Make it engaging and cinematic.
-        """
+        """Generate a cinematic script from description with specific character names"""
+        prompt = query  # Use the query directly as it's already formatted in ai_agent.py
         
         try:
             llm = ChatGoogleGenerativeAI(
