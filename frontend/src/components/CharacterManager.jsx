@@ -60,7 +60,7 @@ function CharacterManager({ characters, onCreateCharacter, voices }) {
         <p className="text-gray-600">Create and manage your story characters</p>
       </div>
       
-      <form onSubmit={handleSubmit} className="bg-white rounded-3xl p-8 mb-8 card-shadow hover:card-shadow-hover transition-all duration-200">
+      <form onSubmit={handleSubmit} className="bg-gradient-to-br from-white to-purple-50/40 rounded-3xl p-8 mb-8 card-shadow hover:card-shadow-hover transition-all duration-200">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
           <div>
             <label htmlFor="name" className="block mb-2 font-semibold text-gray-700">
@@ -136,7 +136,7 @@ function CharacterManager({ characters, onCreateCharacter, voices }) {
           Your Characters
         </h3>
         {characters.length === 0 ? (
-          <div className="bg-white rounded-3xl p-12 text-center card-shadow">
+          <div className="bg-gradient-to-br from-white to-gray-50/40 rounded-3xl p-12 text-center card-shadow">
             <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <svg className="w-8 h-8 text-gray-400" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
@@ -150,7 +150,7 @@ function CharacterManager({ characters, onCreateCharacter, voices }) {
             {characters.map((character, index) => (
               <div 
                 key={index} 
-                className="bg-white rounded-2xl p-6 card-shadow hover:card-shadow-hover transition-all duration-200 hover:-translate-y-1"
+                className="bg-gradient-to-br from-white to-indigo-50/30 rounded-2xl p-6 card-shadow hover:card-shadow-hover transition-all duration-200 hover:-translate-y-1"
               >
                 <div className="flex items-center gap-3 mb-4">
                   <div className="w-12 h-12 bg-purple-600 rounded-full flex items-center justify-center text-white font-bold text-lg">

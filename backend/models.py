@@ -3,7 +3,7 @@ from typing import List, Optional
 
 class Character(BaseModel):
     name: str
-    description: str
+    description: Optional[str] = None
     voice_id: str = "en-US-ken"
 
 class RephraseRequest(BaseModel):

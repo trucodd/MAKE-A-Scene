@@ -14,7 +14,7 @@ from tts_handler import generate_tts_audio
 from database import get_db, create_tables, Character as DBCharacter, Message as DBMessage
 from audio_mixer import mix_audio_tracks
 
-load_dotenv()
+load_dotenv(dotenv_path="../.env")
 
 app = FastAPI()
 
@@ -30,35 +30,24 @@ app.add_middleware(
 
 
 
-def call_openrouter_api(prompt: str) -> str:
-    """Call OpenRouter API directly"""
+def call_gemini_api(prompt: str) -> str:
+    """Call Gemini API directly"""
     try:
-        headers = {
-            "Authorization": f"Bearer {os.getenv('OPENROUTER_API_KEY')}",
-            "Content-Type": "application/json"
-        }
+        import google.generativeai as genai
         
-        payload = {
-            "model": "deepseek/deepseek-chat-v3.1:free",
-            "messages": [{"role": "user", "content": prompt}],
-            "temperature": 0.3,
-            "max_tokens": 300,
-            "top_p": 0.7
-        }
-        
-        response = requests.post(
-            "https://openrouter.ai/api/v1/chat/completions",
-            headers=headers,
-            json=payload
-        )
-        
-        if response.status_code == 200:
-            return response.json()["choices"][0]["message"]["content"]
-        else:
-            print(f"OpenRouter API error: {response.text}")
+        api_key = os.getenv('GEMINI_KEY')
+        if not api_key:
+            print("ERROR: GEMINI_KEY not found in environment")
             return prompt
+        
+        genai.configure(api_key=api_key)
+        model = genai.GenerativeModel('models/gemini-2.0-flash-exp')
+        
+        response = model.generate_content(prompt)
+        return response.text
+        
     except Exception as e:
-        print(f"Error calling OpenRouter API: {e}")
+        print(f"Error calling Gemini API: {e}")
         return prompt
 
 def rephrase_text_with_llm(text: str, tags: str = None) -> str:
@@ -67,22 +56,64 @@ def rephrase_text_with_llm(text: str, tags: str = None) -> str:
     else:
         tag_instruction = ""
     
-    prompt = f"""Make subtle improvements to this text. {tag_instruction}Keep it natural and don't over-edit. Just polish the wording slightly while maintaining the original style and meaning.
+    prompt = f"""Improve this dialogue by making it more natural and engaging. {tag_instruction}Only return the dialogue itself - no scene descriptions, no actions in asterisks or parentheses, just the spoken words. Keep the core meaning but enhance the flow and impact.
 
-Text: {text}
+Original: {text}
 
-Improved:"""
-    return call_openrouter_api(prompt)
+Improved dialogue:"""
+    
+    response = call_gemini_api(prompt)
+    
+    # Extract just the improved text
+    if "Improved dialogue:" in response:
+        improved_text = response.split("Improved dialogue:")[-1].strip()
+    elif "Improved:" in response:
+        improved_text = response.split("Improved:")[-1].strip()
+    else:
+        improved_text = response.strip()
+    
+    # Remove quotes if present
+    if improved_text.startswith('"') and improved_text.endswith('"'):
+        improved_text = improved_text[1:-1]
+    
+    # Remove any action descriptions in asterisks or parentheses
+    import re
+    improved_text = re.sub(r'\*[^*]*\*', '', improved_text)
+    improved_text = re.sub(r'\([^)]*\)', '', improved_text)
+    
+    return improved_text.strip()
 
-def apply_character_consistency(text: str, character_name: str, character_description: str) -> str:
-    prompt = f"""You are {character_name}. Character description: {character_description}
+def apply_character_consistency(text: str, character_name: str, character_description: str = None) -> str:
+    if not character_description:
+        # If no description, just do basic rephrasing
+        return rephrase_text_with_llm(text)
+    
+    prompt = f"""Rephrase the following dialogue to match {character_name}'s speaking style. Character description: {character_description}
 
-You must stay completely in character. Rewrite the following text as {character_name} would say it, maintaining their personality, speech patterns, and perspective. Keep the core message but express it in {character_name}'s unique voice.
+Only return the rephrased dialogue - no scene descriptions, no actions, just the spoken words that {character_name} would say. Keep the same meaning but adjust the tone, word choice, and style to match the character.
 
-Text to rewrite: {text}
+Original dialogue: {text}
 
-{character_name} says:"""
-    return call_openrouter_api(prompt)
+Rephrased dialogue:"""
+    
+    response = call_gemini_api(prompt)
+    
+    # Clean up the response
+    if "Rephrased dialogue:" in response:
+        rephrased = response.split("Rephrased dialogue:")[-1].strip()
+    else:
+        rephrased = response.strip()
+    
+    # Remove quotes if present
+    if rephrased.startswith('"') and rephrased.endswith('"'):
+        rephrased = rephrased[1:-1]
+    
+    # Remove any action descriptions in asterisks or parentheses
+    import re
+    rephrased = re.sub(r'\*[^*]*\*', '', rephrased)
+    rephrased = re.sub(r'\([^)]*\)', '', rephrased)
+    
+    return rephrased.strip()
 
 @app.get("/voices")
 async def get_voices():
@@ -130,7 +161,7 @@ async def startup_event():
 async def create_character(character: Character, db: Session = Depends(get_db)):
     db_character = DBCharacter(
         name=character.name,
-        description=character.description,
+        description=character.description or "",
         voice_id=character.voice_id
     )
     db.add(db_character)
@@ -143,7 +174,7 @@ async def update_character(character_name: str, character: Character, db: Sessio
     if not db_character:
         raise HTTPException(status_code=404, detail="Character not found")
     
-    db_character.description = character.description
+    db_character.description = character.description or ""
     db_character.voice_id = character.voice_id
     db.commit()
     return {"message": f"Character {character_name} updated successfully"}
@@ -159,24 +190,26 @@ async def rephrase_text(request: RephraseRequest):
         print(f"Rephrase request: {request.text}, character: {request.character_name}")
         text = request.text
         
-        if request.character_name:
+        if request.character_name and request.character_name != "Narrator":
             db = next(get_db())
             character_data = db.query(DBCharacter).filter(DBCharacter.name == request.character_name).first()
-            if not character_data:
-                raise HTTPException(status_code=404, detail="Character not found")
             db.close()
-            print(f"Applying character consistency for {request.character_name}")
-            text = apply_character_consistency(
-                text, 
-                request.character_name, 
-                character_data.description
-            )
-            print(f"Character consistency result: {text}")
+            
+            if character_data:
+                print(f"Applying character consistency for {request.character_name}")
+                rephrased_text = apply_character_consistency(
+                    text, 
+                    request.character_name, 
+                    character_data.description
+                )
+            else:
+                # Character not found, do basic rephrase
+                rephrased_text = rephrase_text_with_llm(text, request.tags)
+        else:
+            # No character or Narrator - do basic rephrase
+            rephrased_text = rephrase_text_with_llm(text, request.tags)
         
-        # Rephrase the text
-        print(f"Rephrasing text: {text}")
-        rephrased_text = rephrase_text_with_llm(text, request.tags)
-        print(f"Rephrased result: {rephrased_text}")
+        print(f"Final rephrased result: {rephrased_text}")
         return {"rephrased_text": rephrased_text}
         
     except Exception as e:
