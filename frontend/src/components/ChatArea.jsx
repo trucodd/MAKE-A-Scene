@@ -103,8 +103,8 @@ function ChatArea({ characters, mixerTracks, onTracksChange }) {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[85vh]">
       {/* Messages Area - Takes 2 columns */}
-      <div className="lg:col-span-2 bg-white rounded-3xl p-6 card-shadow hover:card-shadow-hover transition-all duration-200 flex flex-col">
-        <h2 className="text-2xl font-bold text-gray-900 mb-6">Conversation</h2>
+      <div className="lg:col-span-2 bg-gradient-to-br from-white to-blue-50/40 rounded-3xl p-6 card-shadow hover:card-shadow-hover transition-all duration-200 flex flex-col">
+        <h2 className="text-2xl font-bold text-gray-900 mb-6">Scene Dialogues</h2>
         <div className="flex-1 overflow-y-auto pr-4 -mr-4 scrollbar-thin" style={{maxHeight: 'calc(85vh - 120px)'}}>
           {messages.filter(message => message.sender === 'user').map((message, index) => (
             <div key={index} className="mb-2 group">
@@ -137,7 +137,9 @@ function ChatArea({ characters, mixerTracks, onTracksChange }) {
                         }}
                         title="Listen"
                       >
-                        🔊
+                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                          <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
+                        </svg>
                       </button>
                       <button 
                         className="bg-gray-600 hover:bg-gray-700 text-white px-3 py-2 rounded-lg text-xs font-medium transition-colors duration-200"
@@ -176,7 +178,7 @@ function ChatArea({ characters, mixerTracks, onTracksChange }) {
       </div>
 
       {/* Input Controls - Takes 1 column */}
-      <div className="bg-white rounded-3xl p-6 card-shadow hover:card-shadow-hover transition-all duration-200 flex flex-col h-full">
+      <div className="bg-gradient-to-br from-white to-purple-50/40 rounded-3xl p-6 card-shadow hover:card-shadow-hover transition-all duration-200 flex flex-col h-full">
         <h2 className="text-2xl font-bold text-gray-900 mb-6">Create Message</h2>
         
         <div className="space-y-4 flex-1 flex flex-col justify-between">
@@ -242,6 +244,7 @@ function ChatArea({ characters, mixerTracks, onTracksChange }) {
               />
               <div className="flex flex-col justify-end">
                 <button 
+                  type="button"
                   onClick={handleRephrase} 
                   disabled={!inputText.trim()}
                   className="px-4 py-3 bg-gray-600 hover:bg-gray-700 text-white rounded-xl font-medium text-sm transition-all duration-200 disabled:bg-gray-300 disabled:cursor-not-allowed whitespace-nowrap mb-4"
@@ -249,6 +252,7 @@ function ChatArea({ characters, mixerTracks, onTracksChange }) {
                   Rephrase
                 </button>
                 <button 
+                  type="button"
                   onClick={sendMessage} 
                   disabled={!inputText.trim()}
                   className="px-4 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-xl font-medium text-sm transition-all duration-200 disabled:bg-gray-300 disabled:cursor-not-allowed whitespace-nowrap"

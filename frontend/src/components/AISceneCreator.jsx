@@ -126,10 +126,15 @@ function AISceneCreator({ characters, voices, onTracksChange }) {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="max-w-7xl mx-auto space-y-6">
       {/* Mode Toggle */}
-      <div className="bg-white rounded-3xl p-6 card-shadow hover:card-shadow-hover transition-all duration-200">
-        <h2 className="text-xl font-bold text-gray-900 mb-4">⚙️ Input Mode</h2>
+      <div className="bg-gradient-to-br from-white to-indigo-50/40 rounded-3xl p-6 card-shadow hover:card-shadow-hover transition-all duration-200">
+        <h2 className="text-xl font-bold text-gray-900 mb-4">
+          <svg className="w-5 h-5 inline mr-2" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M12 15.5A3.5 3.5 0 0 1 8.5 12A3.5 3.5 0 0 1 12 8.5a3.5 3.5 0 0 1 3.5 3.5 3.5 3.5 0 0 1-3.5 3.5m7.43-2.53c.04-.32.07-.64.07-.97 0-.33-.03-.66-.07-1l2.11-1.63c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.31-.61-.22l-2.49 1c-.52-.39-1.06-.73-1.69-.98l-.37-2.65A.506.506 0 0 0 14 2h-4c-.25 0-.46.18-.5.42l-.37 2.65c-.63.25-1.17.59-1.69.98l-2.49-1c-.22-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64L4.57 11c-.04.34-.07.67-.07 1 0 .33.03.65.07.97l-2.11 1.66c-.19.15-.25.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1.01c.52.4 1.06.74 1.69.99l.37 2.65c.04.24.25.42.5.42h4c.25 0 .46-.18.5-.42l.37-2.65c.63-.26 1.17-.59 1.69-.99l2.49 1.01c.22.08.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.66Z"/>
+          </svg>
+          Input Mode
+        </h2>
         <div className="flex gap-4">
           <button
             onClick={() => {
@@ -144,7 +149,10 @@ function AISceneCreator({ characters, voices, onTracksChange }) {
                 : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
             }`}
           >
-            🤖 AI Generation
+            <svg className="w-4 h-4 inline mr-2" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+            </svg>
+            AI Generation
           </button>
           <button
             onClick={() => {
@@ -159,7 +167,10 @@ function AISceneCreator({ characters, voices, onTracksChange }) {
                 : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
             }`}
           >
-            ✍️ Manual Input
+            <svg className="w-4 h-4 inline mr-2" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M20.71,7.04C21.1,6.65 21.1,6 20.71,5.63L18.37,3.29C18,2.9 17.35,2.9 16.96,3.29L15.12,5.12L18.87,8.87M3,17.25V21H6.75L17.81,9.93L14.06,6.18L3,17.25Z"/>
+            </svg>
+            Manual Input
           </button>
         </div>
         <p className="text-gray-600 text-sm mt-2">
@@ -170,25 +181,37 @@ function AISceneCreator({ characters, voices, onTracksChange }) {
         </p>
       </div>
 
-      {/* Context Section - AI Mode */}
-      {!useManualInput && (
-        <div className="bg-white rounded-3xl p-6 card-shadow hover:card-shadow-hover transition-all duration-200">
-          <h2 className="text-xl font-bold text-gray-900 mb-4">🎬 Scene Context</h2>
-          <textarea
-            value={context}
-            onChange={(e) => setContext(e.target.value)}
-            placeholder="Describe the scene setting, mood, and atmosphere..."
-            className="w-full h-24 bg-white border border-gray-200 rounded-xl p-3 text-gray-900 placeholder-gray-500 resize-none focus:outline-none focus:border-purple-600 focus:ring-2 focus:ring-purple-100"
-          />
-        </div>
-      )}
+      {/* Main Content Grid */}
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+        {/* Left Column */}
+        <div className="space-y-6">
+          {/* Context Section - AI Mode */}
+          {!useManualInput && (
+            <div className="bg-gradient-to-br from-white to-emerald-50/40 rounded-3xl p-6 card-shadow hover:card-shadow-hover transition-all duration-200">
+              <h2 className="text-xl font-bold text-gray-900 mb-4">
+                <svg className="w-5 h-5 inline mr-2" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M18 4l2 4h-3l-2-4h-2l2 4h-3l-2-4H8l2 4H7L5 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4h-4z"/>
+                </svg>
+                Scene Context
+              </h2>
+              <textarea
+                value={context}
+                onChange={(e) => setContext(e.target.value)}
+                placeholder="Describe the scene setting, mood, and atmosphere..."
+                className="w-full h-32 bg-white border border-gray-200 rounded-xl p-3 text-gray-900 placeholder-gray-500 resize-none focus:outline-none focus:border-purple-600 focus:ring-2 focus:ring-purple-100"
+              />
+            </div>
+          )}
 
-
-
-      {/* Characters Section */}
-      <div className="bg-white rounded-3xl p-6 card-shadow hover:card-shadow-hover transition-all duration-200">
+          {/* Characters Section */}
+          <div className="bg-gradient-to-br from-white to-violet-50/40 rounded-3xl p-6 card-shadow hover:card-shadow-hover transition-all duration-200">
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-bold text-gray-900">👥 Scene Characters</h2>
+          <h2 className="text-xl font-bold text-gray-900">
+            <svg className="w-5 h-5 inline mr-2" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+            </svg>
+            Scene Characters
+          </h2>
           <button
             onClick={addCharacter}
             className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-xl transition-colors duration-200"
@@ -221,7 +244,9 @@ function AISceneCreator({ characters, voices, onTracksChange }) {
                 onClick={() => removeCharacter(index)}
                 className="px-3 py-2 bg-red-100 hover:bg-red-200 text-red-600 rounded-xl transition-colors duration-200"
               >
-                ✕
+                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z"/>
+                </svg>
               </button>
             </div>
           ))}
@@ -229,12 +254,20 @@ function AISceneCreator({ characters, voices, onTracksChange }) {
           {(useManualInput ? manualSceneCharacters : aiSceneCharacters).length === 0 && (
             <p className="text-gray-500 text-center py-4">No characters added yet</p>
           )}
+          </div>
+          </div>
         </div>
-      </div>
 
-      {/* Script Section */}
-      <div className="bg-white rounded-3xl p-6 card-shadow hover:card-shadow-hover transition-all duration-200">
-        <h2 className="text-xl font-bold text-gray-900 mb-4">📝 Script</h2>
+        {/* Right Column */}
+        <div className="space-y-6">
+          {/* Script Section */}
+          <div className="bg-gradient-to-br from-white to-blue-50/40 rounded-3xl p-6 card-shadow hover:card-shadow-hover transition-all duration-200 h-fit">
+        <h2 className="text-xl font-bold text-gray-900 mb-4">
+          <svg className="w-5 h-5 inline mr-2" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
+          </svg>
+          Script
+        </h2>
         <div className="text-sm text-gray-600 mb-3">
           {useManualInput 
             ? 'Enter your complete scene script with format: [SCENE: description], CHARACTER: "dialogue", [SFX: effect]'
@@ -249,11 +282,29 @@ function AISceneCreator({ characters, voices, onTracksChange }) {
             : 'Generated script will appear here...'
           }
           readOnly={!useManualInput}
-          className={`w-full h-40 bg-white border border-gray-200 rounded-xl p-3 text-gray-900 placeholder-gray-500 resize-none focus:outline-none focus:border-purple-600 focus:ring-2 focus:ring-purple-100 font-mono text-sm ${!useManualInput ? 'bg-gray-50' : ''}`}
-        />
+          className={`w-full h-64 xl:h-80 bg-white border border-gray-200 rounded-xl p-3 text-gray-900 placeholder-gray-500 resize-none focus:outline-none focus:border-purple-600 focus:ring-2 focus:ring-purple-100 font-mono text-sm ${!useManualInput ? 'bg-gray-50' : ''}`}
+          />
+          </div>
+          {/* Audio Player */}
+          {((!useManualInput && aiAudioUrl) || (useManualInput && manualAudioUrl)) && (
+            <div className="bg-gradient-to-br from-white to-pink-50/40 rounded-3xl p-6 card-shadow hover:card-shadow-hover transition-all duration-200">
+              <h2 className="text-xl font-bold text-gray-900 mb-4">
+                <svg className="w-5 h-5 inline mr-2" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/>
+                </svg>
+                Generated Audio
+              </h2>
+              <audio controls className="w-full">
+                <source src={useManualInput ? manualAudioUrl : aiAudioUrl} type="audio/mpeg" />
+                Your browser does not support the audio element.
+              </audio>
+              <div className="mt-2 text-sm text-gray-600">
+                Audio URL: <a href={useManualInput ? manualAudioUrl : aiAudioUrl} target="_blank" rel="noopener noreferrer" className="text-purple-600 hover:underline">{useManualInput ? manualAudioUrl : aiAudioUrl}</a>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
-
-
 
       {/* Action Buttons */}
       <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -264,7 +315,21 @@ function AISceneCreator({ characters, voices, onTracksChange }) {
               disabled={isCreatingScene || (aiSceneCharacters.length === 0 || !context.trim())}
               className="px-8 py-3 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-xl transition-all duration-200 hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0"
             >
-              {isCreatingScene ? '🔄 AI Agent Working...' : '🎬 Create Scene'}
+              {isCreatingScene ? (
+                <>
+                  <svg className="w-4 h-4 inline mr-2 animate-spin" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 4V2A10 10 0 0 0 2 12h2a8 8 0 0 1 8-8z"/>
+                  </svg>
+                  AI Agent Working...
+                </>
+              ) : (
+                <>
+                  <svg className="w-4 h-4 inline mr-2" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M18 4l2 4h-3l-2-4h-2l2 4h-3l-2-4H8l2 4H7L5 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4h-4z"/>
+                  </svg>
+                  Create Scene
+                </>
+              )}
             </button>
             
             {aiSceneId && (
@@ -273,7 +338,21 @@ function AISceneCreator({ characters, voices, onTracksChange }) {
                 disabled={isGeneratingAudio}
                 className="px-8 py-3 bg-gray-600 hover:bg-gray-700 text-white font-bold rounded-xl transition-all duration-200 hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0"
               >
-                {isGeneratingAudio ? '🎵 Generating Audio...' : '🎵 Generate Audio'}
+                {isGeneratingAudio ? (
+                  <>
+                    <svg className="w-4 h-4 inline mr-2 animate-spin" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M12 4V2A10 10 0 0 0 2 12h2a8 8 0 0 1 8-8z"/>
+                    </svg>
+                    Generating Audio...
+                  </>
+                ) : (
+                  <>
+                    <svg className="w-4 h-4 inline mr-2" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/>
+                    </svg>
+                    Generate Audio
+                  </>
+                )}
               </button>
             )}
           </>
@@ -283,26 +362,28 @@ function AISceneCreator({ characters, voices, onTracksChange }) {
             disabled={isGeneratingAudio || !script.trim() || manualSceneCharacters.length === 0}
             className="px-8 py-3 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-xl transition-all duration-200 hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0"
           >
-            {isGeneratingAudio ? '🎵 Generating Audio...' : '🎵 Generate Audio'}
+            {isGeneratingAudio ? (
+              <>
+                <svg className="w-4 h-4 inline mr-2 animate-spin" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 4V2A10 10 0 0 0 2 12h2a8 8 0 0 1 8-8z"/>
+                </svg>
+                Generating Audio...
+              </>
+            ) : (
+              <>
+                <svg className="w-4 h-4 inline mr-2" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/>
+                </svg>
+                Generate Audio
+              </>
+            )}
           </button>
         )}
       </div>
 
 
 
-      {/* Audio Player */}
-      {((!useManualInput && aiAudioUrl) || (useManualInput && manualAudioUrl)) && (
-        <div className="bg-white rounded-3xl p-6 card-shadow hover:card-shadow-hover transition-all duration-200">
-          <h2 className="text-xl font-bold text-gray-900 mb-4">🎵 Generated Audio</h2>
-          <audio controls className="w-full">
-            <source src={useManualInput ? manualAudioUrl : aiAudioUrl} type="audio/mpeg" />
-            Your browser does not support the audio element.
-          </audio>
-          <div className="mt-2 text-sm text-gray-600">
-            Audio URL: <a href={useManualInput ? manualAudioUrl : aiAudioUrl} target="_blank" rel="noopener noreferrer" className="text-purple-600 hover:underline">{useManualInput ? manualAudioUrl : aiAudioUrl}</a>
-          </div>
-        </div>
-      )}
+
     </div>
   );
 }

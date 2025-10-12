@@ -65,12 +65,12 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-purple-50/50 to-blue-50/50 p-6">
       {/* Ethereal gradient accent - used sparingly */}
       <div className="fixed top-20 right-20 w-96 h-96 ethereal-gradient rounded-full opacity-30 pointer-events-none"></div>
       
       <div className="max-w-7xl mx-auto">
-        <header className="bg-white rounded-2xl p-6 mb-4 card-shadow">
+        <header className="bg-white/90 backdrop-blur-sm rounded-2xl p-6 mb-4 card-shadow">
           <div className="flex justify-between items-center">
             <button 
               onClick={() => setShowLanding(true)}
@@ -80,7 +80,7 @@ function App() {
               <span>Home</span>
             </button>
             <div className="flex items-center space-x-2">
-              <div className="w-7 h-7 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl flex items-center justify-center">
+              <div className="w-7 h-7 bg-purple-600 rounded-xl flex items-center justify-center">
                 <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
                 </svg>
