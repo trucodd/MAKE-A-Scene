@@ -8,7 +8,7 @@ services:
     ports:
       - "8000:8000"
     environment:
-      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
+      - GEMINI_KEY=${GEMINI_KEY}
       - MURF_API_KEY=${MURF_API_KEY}
       - FREESOUND_API_KEY=${FREESOUND_API_KEY}
     volumes:
