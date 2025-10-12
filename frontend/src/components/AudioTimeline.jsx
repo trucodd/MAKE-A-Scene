@@ -95,6 +95,37 @@ function AudioTimeline({ tracks, onTracksChange }) {
     setTimeout(() => setIsDragging(false), 200);
   }, []);
 
+  const downloadMixedAudio = async () => {
+    if (tracks.length === 0) return;
+    
+    try {
+      const response = await axios.post(`${API_BASE}/mix-audio-tracks`, {
+        tracks: tracks.map(track => ({
+          id: track.id.toString(),
+          name: track.name,
+          audioData: track.audioData,
+          volume: track.volume || 1.0,
+          type: track.type,
+          insertAfter: null,
+          overlayType: "normal",
+          position: (track.startTime || 0) * 1000
+        }))
+      });
+      
+      if (response.data.mixed_audio_data) {
+        const link = document.createElement('a');
+        link.href = response.data.mixed_audio_data;
+        link.download = `mixed_scene_${Date.now()}.mp3`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      }
+    } catch (error) {
+      console.error('Error downloading mixed audio:', error);
+      alert('Error creating mixed audio. Please try again.');
+    }
+  };
+
   const addBackgroundSound = (sound) => {
     const audio = new Audio(sound.url);
     audio.addEventListener('loadedmetadata', () => {
@@ -356,25 +387,38 @@ function AudioTimeline({ tracks, onTracksChange }) {
               {formatTime(playhead)}
             </div>
           </div>
-          <div className="flex items-center gap-3">
-            <span className="text-sm text-gray-600">Zoom</span>
-            <button 
-              onClick={() => setZoom(Math.max(0.25, zoom - 0.25))}
-              className="p-2 hover:bg-gray-100 rounded-lg transition-colors duration-200"
+          <div className="flex items-center gap-4">
+            <button
+              onClick={downloadMixedAudio}
+              disabled={tracks.length === 0}
+              className="bg-purple-600 hover:bg-purple-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white px-4 py-2 rounded-xl font-medium text-sm transition-all duration-200 hover:-translate-y-0.5 flex items-center gap-2"
+              title="Download mixed audio"
             >
               <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M19 13H5v-2h14v2z"/>
+                <path d="M5,20H19V18H5M19,9H15V3H9V9H5L12,16L19,9Z"/>
               </svg>
+              Download
             </button>
-            <span className="text-sm font-medium text-gray-900 min-w-[50px] text-center">{Math.round(zoom * 100)}%</span>
-            <button 
-              onClick={() => setZoom(Math.min(4, zoom + 0.25))}
-              className="p-2 hover:bg-gray-100 rounded-lg transition-colors duration-200"
-            >
-              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
-              </svg>
-            </button>
+            <div className="flex items-center gap-3">
+              <span className="text-sm text-gray-600">Zoom</span>
+              <button 
+                onClick={() => setZoom(Math.max(0.25, zoom - 0.25))}
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors duration-200"
+              >
+                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M19 13H5v-2h14v2z"/>
+                </svg>
+              </button>
+              <span className="text-sm font-medium text-gray-900 min-w-[50px] text-center">{Math.round(zoom * 100)}%</span>
+              <button 
+                onClick={() => setZoom(Math.min(4, zoom + 0.25))}
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors duration-200"
+              >
+                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+                </svg>
+              </button>
+            </div>
           </div>
         </div>
       </div>
