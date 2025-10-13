@@ -7,7 +7,7 @@ from typing import List, Dict, Any, Optional
 import os
 from dotenv import load_dotenv
 
-from ai_agent import SceneCreatorAgent
+from scene_creator import SceneCreator
 
 # Load .env from parent directory
 load_dotenv(dotenv_path="../.env")
@@ -32,8 +32,8 @@ app.mount("/audio", StaticFiles(directory="mixed_scenes"), name="audio")
 app.mount("/sounds", StaticFiles(directory="sounds"), name="sounds")
 app.mount("/tts", StaticFiles(directory="tts_audio"), name="tts")
 
-# Initialize the AI agent
-scene_agent = SceneCreatorAgent()
+# Initialize the scene creator
+scene_creator = SceneCreator()
 
 class SceneRequest(BaseModel):
     description: str
@@ -54,9 +54,9 @@ class SceneResponse(BaseModel):
 
 @app.post("/create-scene", response_model=SceneResponse)
 async def create_scene(request: SceneRequest):
-    """Create a complete scene with AI agent workflow"""
+    """Create a complete scene with AI workflow"""
     try:
-        result = await scene_agent.create_scene(
+        result = await scene_creator.create_scene(
             description=request.description,
             characters=request.characters,
             style=request.style
@@ -69,7 +69,7 @@ async def create_scene(request: SceneRequest):
 async def get_scene(scene_id: str):
     """Get scene details by ID"""
     try:
-        scene = await scene_agent.get_scene(scene_id)
+        scene = await scene_creator.get_scene(scene_id)
         if not scene:
             raise HTTPException(status_code=404, detail="Scene not found")
         return scene
@@ -80,7 +80,7 @@ async def get_scene(scene_id: str):
 async def create_manual_scene(request: ManualSceneRequest):
     """Create scene with manual script input"""
     try:
-        result = await scene_agent.create_manual_scene(
+        result = await scene_creator.create_manual_scene(
             script=request.script,
             characters=request.characters,
             title=request.title
@@ -94,7 +94,7 @@ async def generate_audio(scene_id: str):
     """Generate audio for an existing scene"""
     try:
         print(f"Generating audio for scene: {scene_id}")
-        result = await scene_agent.generate_audio(scene_id)
+        result = await scene_creator.generate_audio(scene_id)
         if not result:
             print(f"Scene not found: {scene_id}")
             raise HTTPException(status_code=404, detail="Scene not found")
@@ -112,7 +112,7 @@ async def root():
         "service": "AI Scene Creator",
         "version": "1.0.0",
         "endpoints": {
-            "POST /create-scene": "Create a complete scene with AI agent workflow",
+            "POST /create-scene": "Create a complete scene with AI workflow",
             "POST /create-manual-scene": "Create scene with manual script input",
             "GET /scene/{scene_id}": "Get scene details by ID",
             "POST /generate-audio/{scene_id}": "Generate audio for existing scene",
@@ -157,10 +157,10 @@ MARY: "I've been ready since the beginning."
             "status": "test"
         }
         
-        scene_agent.scenes["test-123"] = test_scene
+        scene_creator.scenes["test-123"] = test_scene
         
         # Test audio generation
-        result = await scene_agent.generate_audio("test-123")
+        result = await scene_creator.generate_audio("test-123")
         return result
         
     except Exception as e:
@@ -209,7 +209,7 @@ async def play_audio(scene_id: str):
 async def debug_tts(scene_id: str):
     """Debug TTS generation for a scene"""
     try:
-        scene = scene_agent.scenes.get(scene_id)
+        scene = scene_creator.scenes.get(scene_id)
         if not scene:
             return {"error": "Scene not found"}
         
@@ -231,7 +231,7 @@ async def debug_tts(scene_id: str):
 async def debug_sfx(scene_id: str):
     """Debug sound effects search for a scene"""
     try:
-        scene = scene_agent.scenes.get(scene_id)
+        scene = scene_creator.scenes.get(scene_id)
         if not scene:
             return {"error": "Scene not found"}
         

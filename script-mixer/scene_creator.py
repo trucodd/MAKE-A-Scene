@@ -5,12 +5,6 @@ import asyncio
 import io
 from typing import Dict, List, Any, Optional
 from langchain_google_genai import ChatGoogleGenerativeAI
-from langchain.agents import initialize_agent, AgentType
-from langchain.tools import BaseTool
-from langchain.callbacks.manager import CallbackManagerForToolRun
-from langchain.memory import ConversationBufferMemory
-from langchain.schema import BaseMessage
-from pydantic import BaseModel
 from dotenv import load_dotenv
 
 # Load .env from parent directory
@@ -20,45 +14,16 @@ load_dotenv(dotenv_path="../.env")
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
 from tools.script_generator import ScriptGeneratorTool
-from tools.dialogue_parser import DialogueParserTool
 
-from tools.sound_effects import SoundEffectsTool
-from tools.tts_generator import TTSGeneratorTool
-from tools.audio_mixer import AudioMixerTool
-
-class SceneCreatorAgent:
+class SceneCreator:
     def __init__(self):
         self.llm = ChatGoogleGenerativeAI(
             model="models/gemini-2.0-flash-exp",
             google_api_key=os.getenv("GEMINI_KEY")
         )
         
-        # Initialize only script generation tool for create_scene
+        # Initialize script generation tool
         self.script_tool = ScriptGeneratorTool()
-        
-        # Initialize all tools for audio generation
-        self.audio_tools = [
-            DialogueParserTool(),
-            SoundEffectsTool(),
-            TTSGeneratorTool(),
-            AudioMixerTool()
-        ]
-        
-        # Initialize agent with memory
-        self.memory = ConversationBufferMemory(
-            memory_key="chat_history",
-            return_messages=True
-        )
-        
-        # Agent for audio generation only
-        self.audio_agent = initialize_agent(
-            self.audio_tools,
-            self.llm,
-            agent=AgentType.CHAT_CONVERSATIONAL_REACT_DESCRIPTION,
-            verbose=True,
-            memory=self.memory,
-            max_iterations=3
-        )
         
         self.scenes = {}
     
