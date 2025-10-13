@@ -6,7 +6,7 @@ AI-powered scene creator with character management, TTS generation, and audio mi
 
 - **Frontend** - React interface for character creation and audio mixing
 - **Backend** - FastAPI service for TTS, character management, and audio processing  
-- **Script Mixer** - AI agent for script generation and scene creation
+- **Script Mixer** - AI-powered service for script generation, TTS generation, sound effects, and audio mixing
 
 ## Quick Start
 
