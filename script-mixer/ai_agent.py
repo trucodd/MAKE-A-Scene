@@ -21,7 +21,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
 from tools.script_generator import ScriptGeneratorTool
 from tools.dialogue_parser import DialogueParserTool
-from tools.text_enhancer import TextEnhancerTool
+
 from tools.sound_effects import SoundEffectsTool
 from tools.tts_generator import TTSGeneratorTool
 from tools.audio_mixer import AudioMixerTool
@@ -39,7 +39,6 @@ class SceneCreatorAgent:
         # Initialize all tools for audio generation
         self.audio_tools = [
             DialogueParserTool(),
-            TextEnhancerTool(),
             SoundEffectsTool(),
             TTSGeneratorTool(),
             AudioMixerTool()
