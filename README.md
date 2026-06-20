@@ -1,6 +1,6 @@
 # MAKE-A-Scene
 
-AI-powered scene creator with character management, TTS generation, and audio mixing.
+AI Audio scene creator with character management, TTS generation, and audio mixing.
 
 ## Architecture
 
